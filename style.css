@@ -400,3 +400,25 @@ body.zoom .viewer .flip { cursor: zoom-out; }
 .foot .mythos { position: static; }
 .foot .mythos.hand { padding-bottom: 8px; border-top: 1px solid var(--line); }
 body.hashand { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+/* Mazos: el dorso entero con forma de carta y el nombre debajo */
+.decks { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(30%, 118px), 1fr)); gap: 14px 10px; align-items: start; }
+@media (min-width: 700px) { .decks { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); } }
+.deck { cursor: pointer; user-select: none; min-width: 0; }
+.deck .dback {
+  position: relative; width: 100%; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--ink-3) center / cover no-repeat; box-shadow: 0 6px 16px rgba(0, 0, 0, .5), 3px 3px 0 -1px var(--ink-2), 3px 3px 0 0 var(--line);
+  transition: transform .12s, box-shadow .12s;
+}
+.deck:hover .dback { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0, 0, 0, .55), 0 0 0 1px var(--gold); }
+.deck:active .dback { transform: translateY(0); }
+.deck.empty .dback { opacity: .45; }
+.deck .more {
+  position: absolute; top: 5px; right: 5px; width: 30px; height: 26px; z-index: 2;
+  background: rgba(11, 20, 18, .8); border: 1px solid var(--line); border-radius: 7px; color: var(--parch); font-size: 1rem; line-height: 1;
+}
+.deck .cnt {
+  position: absolute; left: 5px; bottom: 5px; min-width: 26px; padding: 1px 7px; border-radius: 99px; text-align: center;
+  background: rgba(11, 20, 18, .85); border: 1px solid var(--line); font-size: .85rem; font-weight: 600;
+}
+.deck .dname { margin-top: 6px; font-family: var(--display); font-size: .98rem; line-height: 1.05; color: var(--gold-2); text-align: center; }
+.deck .dname small { display: block; margin-top: 2px; font-family: var(--body); font-size: .76rem; color: var(--muted); line-height: 1.15; }

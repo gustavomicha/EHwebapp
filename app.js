@@ -368,11 +368,11 @@
         <div class="cardmini empty devc" data-a="devmenu">${S.dev.length}<small>/ 9</small></div>
         <div class="nm">${S.dev.length ? esc(S.dev.join(', ')) : 'ninguna'}</div><div class="ct"><button class="chip" data-a="devmenu">Marcar…</button></div></div>` : ''}
       </div>
-      <h2 class="sec">Encuentros</h2><div class="grid">`;
+      <h2 class="sec">Encuentros</h2><div class="decks">`;
     for (const id of ENC_ORDER) if (S.decks[id]) h += tileHTML(deck(id));
     h += '</div>';
     const sp = S.order.filter((id) => id.startsWith('S:') || id === 'ruinas' || id === 'aventura');
-    if (sp.length) { h += `<h2 class="sec">Encuentros especiales</h2><div class="grid">`; for (const id of sp) h += tileHTML(deck(id)); h += '</div>'; }
+    if (sp.length) { h += `<h2 class="sec">Encuentros especiales</h2><div class="decks">`; for (const id of sp) h += tileHTML(deck(id)); h += '</div>'; }
     if (S.advs.length) h += `<h2 class="sec">Aventuras en juego</h2><div class="codex">${S.advs.map((id) => `<div class="c land" data-open="${id}"><img src="${face(id)}" alt=""></div>`).join('')}</div>`;
     return h;
   }
@@ -380,12 +380,17 @@
   function tileHTML(d) {
     const anyId = d.cards[0] ?? d.disc[0];
     const bg = anyId != null ? back(anyId) : '';
-    const sub = d.kind === 'aventura' ? `${d.cards.length} apartadas · toca para elegir`
-      : d.kind === 'expedicion' || d.kind === 'ruinas' ? `${d.cards.length} cartas · arriba: ${esc(topLoc(d.id) || '—')}`
-      : `${d.cards.length} cartas${d.disc.length ? ` · ${d.disc.length} descartadas` : ''}`;
-    return `<div class="tile ${['america', 'europa', 'asia'].includes(d.kind) ? '' : 'small'}" data-draw="${esc(d.id)}" style="background-image:url(${bg})">
-      <button class="more" data-dmenu="${esc(d.id)}" title="Opciones">⋯</button>
-      <div class="name">${esc(d.name)}<small>${sub}</small></div>
+    // la cantidad de cartas va en la esquina del dorso
+    const sub = d.kind === 'aventura' ? 'toca para elegir'
+      : d.kind === 'expedicion' || d.kind === 'ruinas' ? `arriba: ${esc(topLoc(d.id) || '—')}`
+      : d.disc.length ? `${d.disc.length} descartadas` : '';
+    // el dorso entero, con la forma de la carta, y el nombre debajo
+    return `<div class="deck ${d.cards.length ? '' : 'empty'}" data-draw="${esc(d.id)}">
+      <div class="dback" style="${bg ? `background-image:url(${bg});` : ''}aspect-ratio:${anyId != null ? ratio(anyId) : 0.64}">
+        <button class="more" data-dmenu="${esc(d.id)}" title="Opciones">⋯</button>
+        <span class="cnt">${d.cards.length}</span>
+      </div>
+      <div class="dname">${esc(d.name)}<small>${sub}</small></div>
     </div>`;
   }
 
@@ -412,7 +417,7 @@
       ${m.play.length ? `<div class="codex">${m.play.map((id) => `<div class="c" data-open="${id}"><img src="${face(id)}" loading="lazy" alt=""><span>${esc(MTYPE[CARDS[id].ty] || 'Mitos')}</span></div>`).join('')}</div>` : '<p class="muted">No hay Rumores ni cartas de Mitos Activas en juego.</p>'}
       ${m.disc.length ? `<div class="chips"><button class="chip" data-a="mdisc">Ver descarte de Mitos (${m.disc.length})</button></div>` : ''}`;
     if (S.decks.desastre) {
-      h += `<h2 class="sec">Desastres</h2><div class="grid">${tileHTML(deck('desastre'))}</div>`;
+      h += `<h2 class="sec">Desastres</h2><div class="decks">${tileHTML(deck('desastre'))}</div>`;
     }
     if (S.prelude != null) h += `<h2 class="sec">Preludio</h2><div class="codex"><div class="c" data-open="${S.prelude}"><img src="${face(S.prelude)}" alt=""></div></div>`;
     return h;
