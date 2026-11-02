@@ -366,21 +366,12 @@
   }
 
   function worldHTML() {
-    const exp = S.decks.expedicion, rui = S.decks.ruinas;
-    let h = `<div class="evstrip">
-      <div class="evslot"><div class="lbl">Expedición activa</div>
-        ${exp.cards.length ? `<div class="cardmini" style="background-image:url(${back(exp.cards[0])})" data-peek="expedicion" title="Dorso de la primera carta"></div>` : '<div class="cardmini empty">vacío</div>'}
-        <div class="nm big">${esc(topLoc('expedicion') || '—')}</div><div class="ct">${exp.cards.length} cartas</div></div>
-      ${rui ? `<div class="evslot"><div class="lbl">Ruinas místicas</div>
-        ${rui.cards.length ? `<div class="cardmini" style="background-image:url(${back(rui.cards[0])})" data-peek="ruinas"></div>` : '<div class="cardmini empty">vacío</div>'}
-        <div class="nm big">${esc(topLoc('ruinas') || '—')}</div><div class="ct">${rui.cards.length} cartas</div></div>` : ''}
-      ${S.decks.devastacion ? `<div class="evslot"><div class="lbl">Ciudades devastadas</div>
-        <div class="cardmini empty devc" data-a="devmenu">${S.dev.length}<small>/ 9</small></div>
-        <div class="nm">${S.dev.length ? esc(S.dev.join(', ')) : 'ninguna'}</div><div class="ct"><button class="chip" data-a="devmenu">Marcar…</button></div></div>` : ''}
-      </div>
-      <h2 class="sec">Encuentros</h2><div class="decks">`;
+
+    // la casilla de la Expedición activa y de Ruinas místicas se ve debajo de su mazo
+    let h = `<h2 class="sec">Encuentros</h2><div class="decks">`;
     for (const id of ENC_ORDER) if (S.decks[id]) h += tileHTML(deck(id));
     h += '</div>';
+    if (S.decks.devastacion) h += `<div class="panel devrow"><span>Ciudades devastadas: <b>${S.dev.length}</b> / 9${S.dev.length ? ` · ${esc(S.dev.join(', '))}` : ''}</span><span class="spacer"></span><button class="chip" data-a="devmenu">Marcar…</button></div>`;
     const sp = S.order.filter((id) => id.startsWith('S:') || id === 'ruinas' || id === 'aventura');
     if (sp.length) { h += `<h2 class="sec">Encuentros especiales</h2><div class="decks">`; for (const id of sp) h += tileHTML(deck(id)); h += '</div>'; }
     if (S.advs.length) h += `<h2 class="sec">Aventuras en juego</h2><div class="codex">${S.advs.map((id) => `<div class="c land" data-open="${id}"><img src="${face(id)}" alt=""></div>`).join('')}</div>`;
@@ -392,7 +383,7 @@
     const bg = anyId != null ? back(anyId) : '';
     // la cantidad de cartas va en la esquina del dorso
     const sub = d.kind === 'aventura' ? 'toca para elegir'
-      : d.kind === 'expedicion' || d.kind === 'ruinas' ? `arriba: ${esc(topLoc(d.id) || '—')}`
+      : d.kind === 'expedicion' || d.kind === 'ruinas' ? `<span class="loc">${d.kind === 'expedicion' ? 'Activa' : 'Ficha'}: ${esc(topLoc(d.id) || '—')}</span>`
       : d.disc.length ? `${d.disc.length} descartadas` : '';
     // el dorso entero, con la forma de la carta, y el nombre debajo
     return `<div class="deck ${d.cards.length ? '' : 'empty'}" data-draw="${esc(d.id)}">

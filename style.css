@@ -437,3 +437,6 @@ body.hashand { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
 .myth.rck svg { color: #c39bd3; }
 ul.rk { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
 ul.rk li .chip { margin-right: 4px; }
+.deck .dname small .loc { display: inline-block; margin-top: 2px; padding: 1px 8px; border-radius: 99px; background: rgba(31, 107, 91, .35); border: 1px solid rgba(127, 224, 182, .45); color: var(--parch); font-size: .82rem; }
+.devrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding: 8px 12px; }
+.devrow b { color: #e0775f; }
