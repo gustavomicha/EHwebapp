@@ -1,0 +1,10 @@
+.claude/
+__pycache__/
+*.pyc
+Thumbs.db
+tools/work/sheets/
+tools/work/crops/
+tools/work/*.npz
+tools/work/*.png
+tools/work/*.log
+tools/work_*.py

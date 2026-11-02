@@ -1,0 +1,129 @@
+129 t ficha de Arcano -> Eldritch token
+121 t Perdición -> Doom
+97 t Artefacto -> Artifact
+77 t Retrasado -> Delayed
+77 n Pacto oscuro -> Dark Pact (Deal)
+76 r LOCURA -> Madness
+74 t Augurio -> Omen
+57 r ACTIVO -> Ongoing
+56 r HERIDA -> Injury
+53 t Apoyo único -> Unique Asset
+51 n Paranoia -> Paranoia (Madness)
+51 n Detenido -> Detained (Restriction)
+48 n Maldito -> Cursed (Bane)
+44 n Alucinaciones -> Hallucinations (Madness)
+44 r ALIADO -> Ally
+42 n Amnesia -> Amnesia (Madness)
+41 t Investigador jefe -> Lead Investigator
+39 n Envenenado -> Poisoned (Illness)
+39 r TALENTO -> Talent
+38 t Discapacidad -> Impairment
+34 n Terror -> Terror (Madness)
+31 n El Rey Amarillo -> King In Yellow
+29 n Espalda herida -> Back Injury (Injury)
+28 n Perdido en el tiempo y el espacio -> Lost in Time and Space (Restriction)
+27 t Monstruo épico -> Epic Monster
+26 n Pierna herida -> Leg Injury (Injury)
+23 r RELIQUIA -> Relic
+22 r ENSALMO -> Incantation
+22 n Acuerdo -> Agreement (Deal)
+21 n Heridas internas -> Internal Injury (Injury)
+21 r ARMA -> Weapon
+21 r TAREA -> Task
+20 n Bendecido -> Blessed (Boon)
+19 r ENCANTO -> Glamour
+18 r RITUAL -> Ritual
+18 r OBJETO -> Item
+18 r TOMO -> Tome
+18 r RUINA -> Bane
+17 n Promesa de poder -> Promise of Power (Deal)
+16 n Cabeza herida -> Head Injury (Injury)
+15 n Visiones -> Visions (Talent)
+15 t Desastre -> Disaster
+15 t Ruinas místicas -> Mystic Ruins
+14 n Deuda -> Debt (Deal)
+14 r AYUDA -> Boon
+12 n Ladron -> Cat Burglar
+12 r PERSECUCIÓN -> Pursuit
+11 n Afliccion -> Blight (Bane)
+10 t Concentración -> Focus
+9 n Tesoro perdido -> Lost Treasure
+9 n Experimentado -> Practiced (Talent)
+9 n Desesperacion -> Despair (Madness)
+9 r MÁGICO -> Magical
+8 n Asesinato -> Assassination
+8 r BARATIJA -> Trinket
+7 n Corrupcion -> Corruption (Bane)
+7 t Expedición activa -> Active Expedition
+7 r TRATO -> Deal
+6 r PERSONAJE -> Character
+5 n Tablilla de piedra -> Stone Tablet
+5 r SERVICIO -> Service
+5 n Simbolo arcano -> Elder Sign
+5 n Buscado por la ley -> Wanted (Pursuit)
+4 n Conservador de museo -> Museum Curator
+4 n Santuario -> Sanctuary
+4 n Perseguido -> Hunted (Pursuit)
+4 n Resistente -> Resilient (Talent)
+4 n Mascara palida -> Pallid Mask
+3 n Hambre -> Hunger (Madness)
+3 t Billete de barco -> Ship Ticket
+3 n Profesor Rice -> Professor Rice
+3 t Devastación -> Devastation
+3 t ficha de Mejora -> Improvement token
+3 n Leche de Shub-Niggurath -> Milk of Shub-Niggurath
+3 t Investigador derrotado -> Defeated Investigator
+3 n Corona dela Serpiente -> Serpent Crown
+2 n Regimen de -> Training Regimen
+2 r ELIXIR -> Elixir
+2 t Billete de tren -> Train Ticket
+2 n Surcar el vacio -> Plumb the Void
+2 n Especialista -> Specialist
+2 n Entrenamiento especializado -> Specialized Training
+2 n Contagiado -> Diseased (Illness)
+2 n Cantico Vach-Viraj -> Vach-Viraj Chant
+2 n Amery Wendy Smith -> Amery Wendy-Smith
+2 n Llave de Carcosa -> Key to Carcosa
+2 n Plegaria -> Prayer
+2 n Culte des Goules -> Cultes des Goules
+2 n Espada de Y'ha-Talla -> Sword of Y'ha-Talla
+2 n Niebla de Releh -> Mists of Releh
+1 n Fragmentos de G'harne -> G'harne Fragments
+1 n Implacable -> Relentless (Talent)
+1 n Investigador privado -> Private Investigator
+1 n Niebla venenosa -> Poison Mist
+1 n Palabras curativas -> Healing Words
+1 n Calendario de piedra -> Stone Calendar
+1 t Billete de viaje -> Travel Ticket
+1 n Esposas -> Handcuffs
+1 n Atadura -> Binding
+1 n Meditacion -> Meditation (Talent)
+1 n Destreza de lucha -> Martial Prowess (Talent)
+1 n Secretos de la Agencia -> Agency Secrets
+1 n Agente Callahan -> Agent Callahan
+1 n Profesor Morgan -> Professor Morgan
+1 n Por el bien comun -> For the Greater Good
+1 n Arma lanzarrayos -> Lightning Gun
+1 n Aguabendita -> Holy Water
+1 n Elixir Tikkoun -> Tikkoun Elixir
+1 n Oleada de destruccion -> Wave of Destruction
+1 n Obstinado -> Headstrong (Talent)
+1 r ENFERMEDAD -> Illness
+1 n El Manto Andrajoso -> Tattered Cloak
+1 n Infeccion -> Infection (Illness)
+1 n Idolodel dragon -> Dragon Idol
+1 n Bolsa del vacio -> Satchel of the Void
+1 n Cristal de Mortlan -> Glass of Mortlan
+1 n Texto de ocultismo -> Occult Text
+1 n Flauta de los Dioses Exteriores -> Flute of the Outer Gods
+1 n Espada de San Jeronimo -> Sword of Saint Jerome
+1 n Recipiente para cerebros de los Mi-Go -> Mi-go Brain Case
+1 n Lanzallamas -> Flamethrower
+1 t Encuentro de Combate -> Combat Encounter
+1 n Daga ritual -> Ritual Dagger
+1 n Provisiones -> Provisions
+1 n Rubi de R'lyeh -> Ruby of R'lyeh
+1 n Estatua grotesca -> Grotesque Statue
+1 n Elixir dela vida -> Elixir of Life
+1 n Esfera maldita -> Cursed Sphere
+1 n Tablillas de Zanthu -> Zanthu Tablets

@@ -1,0 +1,275 @@
+[
+[
+"ALADO",
+{
+"Ally": 1
+}
+],
+[
+"ALIADO",
+{
+"Ally": 28
+}
+],
+[
+"ALIADO-PERSONAJE",
+{
+"Ally;Character": 21
+}
+],
+[
+"AYUDA",
+{
+"Boon": 19
+}
+],
+[
+"BARATIA",
+{
+"Trinket": 1
+}
+],
+[
+"BARATIA-MAGICO",
+{
+"Trinket;Magical": 1
+}
+],
+[
+"BARATIIA-MAGICO",
+{
+"Trinket;Magical": 1
+}
+],
+[
+"BARATIJA",
+{
+"Trinket": 7
+}
+],
+[
+"BARATIJA-ARMA",
+{
+"Trinket;Weapon": 1
+}
+],
+[
+"BARATIJA-MAGICO",
+{
+"Trinket;Magical": 1
+}
+],
+[
+"BARATIJA-TOMO",
+{
+"Tome;Trinket": 1
+}
+],
+[
+"CONGELACION",
+{
+"Exposure": 8
+}
+],
+[
+"ENCANTO",
+{
+"Glamour": 24
+}
+],
+[
+"ENFERMEDAD",
+{
+"Illness": 12
+}
+],
+[
+"ENSALMO",
+{
+"Incantation": 32
+}
+],
+[
+"En tuspruebassolocuenta",
+{
+"Bane": 1
+}
+],
+[
+"HERIDA",
+{
+"Injury": 18
+}
+],
+[
+"LOCURA",
+{
+"Madness": 27
+}
+],
+[
+"OBJETO",
+{
+"Item": 20
+}
+],
+[
+"OBJETO -MAGICO,TOMO",
+{
+"Item;Magical;Tome": 1
+}
+],
+[
+"OBJETO-ARMA",
+{
+"Item;Weapon": 15
+}
+],
+[
+"OBJETO-ARMA,MAGICO",
+{
+"Item;Weapon;Magical": 5
+}
+],
+[
+"OBJETO-ELIXIR",
+{
+"Item;Elixir": 3
+}
+],
+[
+"OBJETO-MAGICO",
+{
+"Item;Magical": 13
+}
+],
+[
+"OBJETO-MAGICO,",
+{
+"Item;Magical": 1,
+"Item;Magical;Relic;Weapon": 2,
+"Item;Weapon;Magical;Relic": 1
+}
+],
+[
+"OBJETO-MAGICO,ARMA",
+{
+"Item;Weapon;Magical": 2,
+"Item;Magical;Weapon": 2
+}
+],
+[
+"OBJETO-MAGICO,RELIQUIA",
+{
+"Item;Magical;Relic": 1
+}
+],
+[
+"OBJETO-MAGICO,RELIQULA",
+{
+"Item;Magical;Relic": 1
+}
+],
+[
+"OBJETO-RELIQUIA",
+{
+"Item;Relic": 6
+}
+],
+[
+"OBJETO-RELIQUIA,MAGICO",
+{
+"Item;Magical;Relic": 5
+}
+],
+[
+"OBJETO-RELIQUIA,TOMO",
+{
+"Item;Relic;Tome": 1
+}
+],
+[
+"OBJETO-TOMO",
+{
+"Item;Tome": 22
+}
+],
+[
+"PERSECUCION",
+{
+"Pursuit": 8
+}
+],
+[
+"RESTRICCION",
+{
+"Restriction": 13
+}
+],
+[
+"RITUAL",
+{
+"Ritual": 30
+}
+],
+[
+"RIrUAL",
+{
+"Ritual": 1
+}
+],
+[
+"RUINA",
+{
+"Bane": 26
+}
+],
+[
+"RrTUAL",
+{
+"Ritual": 1
+}
+],
+[
+"SERVICIO",
+{
+"Service": 18
+}
+],
+[
+"SERVICIO-TRABAJOENEQUIPO",
+{
+"Service;Teamwork": 1
+}
+],
+[
+"TALENTO",
+{
+"Talent": 46
+}
+],
+[
+"TALENTO-AYUDA",
+{
+"Talent;Boon": 4
+}
+],
+[
+"TAREA",
+{
+"Task": 57
+}
+],
+[
+"TRATO",
+{
+"Deal": 21
+}
+],
+[
+"TRATO-COMUN",
+{
+"Deal": 14
+}
+]
+]
