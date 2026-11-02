@@ -37,9 +37,9 @@ def fuzzy_in(k, sq, thr=0.88):
     i = sq.find(start)
     while i >= 0:
         for L in (n - 2, n, n + 2, n + 3):
-            if ratio(k, sq[i:i + L]) >= thr: return True
+            if ratio(k, sq[i:i + L]) >= thr: return i
         i = sq.find(start, i + 1)
-    return False
+    return -1
 
 
 class Hinter:
@@ -50,6 +50,17 @@ class Hinter:
 
     def __call__(self, text, kind=None):
         ft = fold(text); sq = squash(text)
+        # mismo texto sin espacios pero conservando mayúsculas: en las reglas los nombres y términos van con mayúscula
+        # («el Estado Deuda», «un Desastre»); así no cuentan los usos comunes («un desastre inminente»)
+        sqc = ''.join(ch for ch in unicodedata.normalize('NFKD', text or '') if not unicodedata.combining(ch))
+        sqc = re.sub(r'[^A-Za-z0-9]', '', sqc)
+        if len(sqc) != len(sq): sqc = sq.upper()  # por las dudas, si no se alinean, no filtra por mayúsculas
+        def capital_at(k):
+            i = sq.find(k)
+            while i >= 0:
+                if sqc[i].isupper(): return True
+                i = sq.find(k, i + 1)
+            return False
         hits = []
         seen = set()
         def add(es, en, k):
@@ -61,7 +72,8 @@ class Hinter:
         for es, en, k in sorted(self.names, key=lambda x: -len(x[2])):
             # los nombres de una palabra («Visiones», «Terror») sólo cuentan tras «Estado», «Apoyo»… (salvo WORD_OK)
             if (' ' not in es.strip() and es not in WORD_OK) or len(k) < 8: continue
-            if k in sq or (len(k) >= 10 and fuzzy_in(k, sq)): add(es, en, 'n')
+            fz = fuzzy_in(k, sq) if len(k) >= 10 and k not in sq else -1
+            if capital_at(k) or (fz >= 0 and sqc[fz].isupper()): add(es, en, 'n')
         # palabras tras los disparadores
         for t in TRIG.finditer(ft):
             m = NEXT.match(ft, t.end())
@@ -78,5 +90,7 @@ class Hinter:
                     if r >= 0.8 and (not best or r > best[0]): best = (r, es, en, 'n')
                 if best: add(best[1], best[2], best[3])
         for es, en, k in self.terms:
-            if len(k) >= 6 and k in sq: add(es, en, 't')
+            # términos: tal cual se escriben en las reglas, con sus mayúsculas («ficha de Arcano», «Monstruo épico»)
+            kc = re.sub(r'[^A-Za-z0-9]', '', ''.join(ch for ch in unicodedata.normalize('NFKD', es) if not unicodedata.combining(ch)))
+            if len(k) >= 6 and kc in sqc: add(es, en, 't')
         return hits

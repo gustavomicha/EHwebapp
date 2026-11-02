@@ -31,6 +31,7 @@ BACK_THR = 6.0
 # Correcciones manuales revisadas contra las imágenes: id -> campos
 FIX = {
     820: {'loc': 'El corazón de África'},  # nombre en dos renglones
+    1158: {'n': 'Descubrimiento de un alineamiento cósmico'},
     # Preludios (títulos en mayúsculas que el OCR pega)
     649: {'n': 'Alineamiento cósmico'}, 650: {'n': 'La tormenta que se avecina'}, 651: {'n': 'Oscuras bendiciones'},
     652: {'n': 'El horror de Dunwich'}, 895: {'n': 'Convertir las debilidades en fortalezas'}, 896: {'n': 'Pecados del pasado'},
@@ -73,6 +74,33 @@ def mythos_info(L):
 
 
 def squash(s): return re.sub(r'[^a-z0-9]', '', fold(s))
+
+
+PRELUDE_RULES = re.compile(r'^(antes|durante|despues|tras|al final)')
+
+
+def rules_text(c, L):
+    """Sólo el texto de reglas de la carta (sin título ni texto de ambientación), para las ayudas en inglés."""
+    k = c['k']
+    if k == 'mitos':
+        # el texto de ambientación y el título van arriba de la línea del tipo (EVENTO / RUMOR / ACTIVO)
+        ty_y = next((y for x, y, t in L if y > 0.3 and re.match(r'^(evento|activo|rumor)', fold(t).replace(' ', ''))), None)
+        if ty_y is not None: L = [l for l in L if l[1] > ty_y + 0.005]
+    elif k == 'misterio':
+        # título arriba, ambientación en el recuadro del medio y reglas en el de abajo: corta en el salto más grande
+        L = sorted([l for l in L if l[1] > 0.16], key=lambda l: l[1])
+        gaps = [(L[i + 1][1] - L[i][1], i + 1) for i in range(len(L) - 1)]
+        if gaps:
+            g, at = max(gaps)
+            if g > 0.08: L = L[at:]
+    elif k == 'preludio':
+        at = next((i for i, l in enumerate(L) if PRELUDE_RULES.match(fold(l[2]).strip())), None)
+        if at is not None: L = L[at:]
+    elif k == 'desastre':
+        L = [l for l in L if l[1] > 0.56]
+    elif k == 'aventura':
+        L = [l for l in L if l[1] > 0.1]
+    return ' '.join(t for x, y, t in L)
 
 
 CITY_CAPS = ['Buenos Aires', 'San Francisco', 'Londres', 'Roma', 'Tokio', 'Shanghái', 'Sídney', 'Arkham', 'Estambul']
@@ -231,7 +259,7 @@ def main():
     es2en.update(NAMES_FIX)
     hint = Hinter(es2en, TRAITS, TERMS)
     for c in cards:
-        h = hint(c['t'])
+        h = hint(rules_text(c, lines(ocr, f"f{c['id']}")) if c['id'] < 9000 else c['t'])
         if c['k'] == 'mitos': h = [x for x in h if x[0] not in ('EVENTO', 'ACTIVO', 'RUMOR')]
         if h: c['en'] = h
     json.dump(es2en, open(os.path.join(WORK, 'es2en.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=0, sort_keys=True)

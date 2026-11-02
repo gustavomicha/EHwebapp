@@ -22,8 +22,8 @@ TERMS = {
     'Perdición': 'Doom', 'Augurio': 'Omen', 'ficha de Arcano': 'Eldritch token', 'Retribución': 'Reckoning',
     'Monstruo épico': 'Epic Monster', 'Concentración': 'Focus', 'Billete de tren': 'Train Ticket',
     'Billete de barco': 'Ship Ticket', 'Billete de viaje': 'Travel Ticket', 'ficha de Mejora': 'Improvement token',
-    'Discapacidad': 'Impairment', 'Expedición activa': 'Active Expedition', 'Ruinas místicas': 'Mystic Ruins',
-    'Apoyo único': 'Unique Asset', 'Artefacto': 'Artifact', 'Retrasado': 'Delayed', 'Investigador jefe': 'Lead Investigator',
+    'discapacidad': 'Impairment', 'Expedición activa': 'Active Expedition', 'Ruinas místicas': 'Mystic Ruins',
+    'Apoyo único': 'Unique Asset', 'Artefacto': 'Artifact', 'Retrasado': 'Delayed', 'investigador jefe': 'Lead Investigator',
     'Investigador derrotado': 'Defeated Investigator', 'Devastación': 'Devastation', 'Desastre': 'Disaster',
     'Resistencia física': 'Physical Resistance', 'Encuentro de Combate': 'Combat Encounter',
 }
@@ -36,7 +36,7 @@ TITLE_GLUE = {
     'Conocimientoperdido': 'Conocimiento perdido', 'delpasado': 'del pasado', 'ymarea': 'y marea', 'delprogreso': 'del progreso',
     'opara': 'o para', 'Preciosinflados': 'Precios inflados', 'tiemponoperdona': 'tiempo no perdona', 'Unavance': 'Un avance',
     'Fortalecerla': 'Fortalecer la', 'Idolodel': 'Ídolo del', 'dela ': 'de la ', 'Elverdadero': 'El verdadero', 'Cazandoal': 'Cazando al', 'Laspiramides': 'Las pirámides',
-    'Descubrimiento de un': 'Descubrimiento de un alineamiento cósmico',
+
     'dela ': 'de la ',
 }
 TITLE_WORDS = {
