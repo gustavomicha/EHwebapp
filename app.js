@@ -533,11 +533,10 @@
   }
 
   // ---------- visor de carta ----------
-  let lastTap = 0;
   function toggleZoom() {
     lsSet(LS_ZOOM, !isZoom()); applyZoom();
     const b = $('#modal [data-zoom]');
-    if (b) b.parentNode.innerHTML = `<button class="chip" data-zoom>${isZoom() ? '− Achicar' : '🔍 Ampliar'}</button> · doble toque en la carta para ${isZoom() ? 'achicar' : 'ampliar'}`;
+    if (b) b.parentNode.innerHTML = `<button class="chip" data-zoom>${isZoom() ? '− Achicar' : '🔍 Ampliar'}</button> · toca la carta para ${isZoom() ? 'achicar' : 'ampliar'}`;
   }
   function openCard(id, opt = {}) {
     const c = CARDS[id]; if (!c) return;
@@ -590,15 +589,14 @@
       <div class="viewer"><div class="flip ${land ? 'land' : ''}" id="flipper" style="aspect-ratio:${ratio(id)}">
         <div class="face a"><img src="${face(id)}" alt="" draggable="false"></div>
       </div></div>
-      <div class="fliphint"><button class="chip" data-zoom>${isZoom() ? '− Achicar' : '🔍 Ampliar'}</button> · doble toque en la carta para ${isZoom() ? 'achicar' : 'ampliar'}</div>
+      <div class="fliphint"><button class="chip" data-zoom>${isZoom() ? '− Achicar' : '🔍 Ampliar'}</button> · toca la carta para ${isZoom() ? 'achicar' : 'ampliar'}</div>
       <div class="actions">${actions}</div>
       ${opt.fresh && p ? '<p class="muted" style="text-align:center;font-size:.85rem">Cerrar con ✕ cancela el robo: la carta vuelve a su lugar.</p>' : ''}
     </div>`, (e) => {
       if (e.target.closest('[data-zoom]')) { toggleZoom(); return; }
       if (e.target.closest('#flipper')) {
-        // doble clic / doble toque: ampliar o volver al tamaño normal (detección propia para que ande igual en el celular)
-        const now = Date.now();
-        if (now - lastTap < 350) { lastTap = 0; toggleZoom(); } else lastTap = now;
+        // un toque en la carta: ampliar o volver al tamaño normal
+        toggleZoom();
         return;
       }
       const tb = e.target.closest('[data-tk]');

@@ -440,3 +440,20 @@ ul.rk li .chip { margin-right: 4px; }
 .deck .dname small .loc { display: inline-block; margin-top: 2px; padding: 1px 8px; border-radius: 99px; background: rgba(31, 107, 91, .35); border: 1px solid rgba(127, 224, 182, .45); color: var(--parch); font-size: .82rem; }
 .devrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding: 8px 12px; }
 .devrow b { color: #e0775f; }
+/* Pantallas grandes: todo crece con el ancho */
+@media (min-width: 1300px) {
+  body:not(.layout-cols) .main, .main { max-width: min(96vw, 2000px); }
+  .decks { grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 12.5vw, 340px), 1fr)); gap: 22px 16px; }
+  .deck .dname { font-size: clamp(1rem, 1.05vw, 1.6rem); }
+  .deck .dname small { font-size: clamp(.76rem, .75vw, 1.1rem); }
+  .deck .cnt { font-size: clamp(.85rem, .8vw, 1.2rem); padding: 2px 9px; }
+  .deck .more { width: 38px; height: 32px; }
+  body:not(.layout-cols) .codex, .codex { grid-template-columns: repeat(auto-fill, minmax(clamp(130px, 13vw, 340px), 1fr)); gap: 14px; }
+  .mystery .mcard { width: min(100%, max(560px, 44vw)); }
+  .viewer .flip { width: min(100%, calc(74vh * 0.64)); }
+  .viewer .flip.land { width: min(100%, max(640px, 52vw)); }
+  .mbox { max-width: max(560px, calc(74vh * 0.64 + 40px)); }
+  .mbox.wide { max-width: min(96vw, 1400px); }
+}
+@media (min-width: 1700px) { html, body { font-size: 19px; } }
+@media (min-width: 2200px) { html, body { font-size: 22px; } }
