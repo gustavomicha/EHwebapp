@@ -8,7 +8,11 @@
   const EXPS = window.EH_EXPANSIONS;
   const EXP_NAME = Object.fromEntries(EXPS.map((e) => [e.id, e.name]));
   const LS_CUR = 'ehm.current', LS_SAVES = 'ehm.saves', LS_HIST = 'ehm.hist', LS_SETUP = 'ehm.setup';
-  const LS_LAYOUT = 'ehm.layout', LS_ZOOM = 'ehm.zoom';
+  const LS_LAYOUT = 'ehm.layout', LS_ZOOM = 'ehm.zoom', LS_SIZE = 'ehm.size';
+  // Tamaño de las cartas en pantalla (mazos, cartas en juego, Misterio): botones − / + abajo a la derecha
+  const SIZES = [0.55, 0.65, 0.75, 0.87, 1, 1.15, 1.3, 1.5, 1.75];
+  const sizeIdx = () => Math.max(0, Math.min(SIZES.length - 1, lsGet(LS_SIZE, 4)));
+  const applySize = () => document.documentElement.style.setProperty('--sz', SIZES[sizeIdx()]);
   const HIST_MAX = 150;
   const isZoom = () => !!lsGet(LS_ZOOM, false);
   const applyZoom = () => document.body.classList.toggle('zoom', isZoom());
@@ -277,15 +281,11 @@
   const toks = () => S.tok || (S.tok = {});
   const tokOf = (id) => toks()[id] || (toks()[id] = { a: 0, p: 0, s: 0 });
   const TOK = { a: 'Arcano', p: 'Pistas', s: 'Salud' };
-  // Fichas sobre la carta como recordatorio visual: ícono del tipo de ficha con el número encima (sólo si hay alguna)
-  const TOK_ICON = {
-    a: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/><path d="M12 2v2.2M12 19.8V22M5 4l1.4 1.8M19 4l-1.4 1.8M5 20l1.4-1.8M19 20l-1.4-1.8"/></svg>',
-    p: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5.5 5.5"/></svg>',
-    s: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.5-9.3C1 8.2 3.2 4.5 6.9 4.5c2.1 0 3.6 1.2 5.1 3 1.5-1.8 3-3 5.1-3 3.7 0 5.9 3.7 4.4 7.2C19.5 16.4 12 21 12 21Z"/></svg>',
-  };
+  // Fichas sobre la carta como recordatorio visual: la ficha original (del mod de TTS) con el número encima, sólo si hay alguna
+  const tokImg = (k) => `<img src="img/tok/${k}.webp" alt="">`;
   const tokBadges = (id) => {
     const t = toks()[id]; if (!t) return '';
-    return Object.keys(TOK).filter((k) => t[k]).map((k) => `<i class="tkn ${k}" title="${t[k]} ${TOK[k]}">${TOK_ICON[k]}<b>${t[k]}</b></i>`).join('');
+    return Object.keys(TOK).filter((k) => t[k]).map((k) => `<i class="tkn ${k}" title="${t[k]} ${TOK[k]}">${tokImg(k)}<b>${t[k]}</b></i>`).join('');
   };
   // pos: 'top' | 'bottom' | 'random' | 'disc'
   function place(id, deckId, pos) {
@@ -339,7 +339,7 @@
     const A = ao();
     const solved = S.myst.solved.length;
     app.innerHTML = `
-      <header class="top">
+      <div class="stickyhead"><header class="top">
         <span class="sign sm"><span class="wordmark sm">Eldritch<br>Horror</span></span>
         <div class="title"><b>${esc(A.name)}</b><small>${S.exps.map((e) => EXP_NAME[e]).join(' · ')} · Misterios ${solved}/3</small></div>
         <button class="iconbtn" data-a="layout" title="${isCols() ? 'Una columna con pestañas' : 'Dos columnas'}">${isCols() ? ICON.single : ICON.cols}</button>
@@ -349,7 +349,7 @@
       </header>
       <nav class="tabs">
         ${[['world', 'Encuentros'], ['mythos', 'Mitos y Misterio'], ['log', 'Registro']].map(([k, l]) => `<button class="tab ${ui.tab === k ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}
-      </nav>
+      </nav></div>
       <main class="main">
         <div class="cols">
           <section class="pane ${ui.tab === 'world' ? 'on' : ''}">${worldHTML()}</section>
@@ -367,9 +367,10 @@
       <nav class="mythos">
         <button class="myth mph" data-m="mythos">${ICON.myth}Fase de<br>Mitos<small>(${S.myth.cards.length})</small></button>
         <button class="myth mys" data-m="myst">${ICON.myst}Misterio<br>activo</button>
-        ${S.myth.play.length ? `<button class="myth rck" data-m="reck">${ICON.reck}Retri-<br>bución</button>` : ''}
+        ${S.myth.play.length ? `<button class="myth rck" data-m="reck">${ICON.reck}Retri­bución</button>` : ''}
         ${S.decks.desastre ? `<button class="myth dis" data-m="disaster">${ICON.disaster}Resolver<br>Desastre</button>` : ''}
-      </nav></footer>`;
+      </nav></footer>
+      <div class="sizectl" title="Tamaño de las cartas"><button data-sz="-1" ${sizeIdx() ? '' : 'disabled'} aria-label="Cartas más chicas">−</button><button data-sz="1" ${sizeIdx() < SIZES.length - 1 ? '' : 'disabled'} aria-label="Cartas más grandes">+</button></div>`;
     document.body.classList.toggle('hashand', S.pending.length > 0);
     bindGame();
   }
@@ -440,10 +441,11 @@
 
   function bindGame() {
     $('#app').onclick = (e) => {
-      const t = e.target.closest('[data-a],[data-tab],[data-draw],[data-dmenu],[data-m],[data-open],[data-peek]');
+      const t = e.target.closest('[data-a],[data-tab],[data-draw],[data-dmenu],[data-m],[data-open],[data-peek],[data-sz]');
       if (!t) return;
       e.stopPropagation();
       if (t.dataset.tab) { ui.tab = t.dataset.tab; render(); return; }
+      if (t.dataset.sz) { lsSet(LS_SIZE, sizeIdx() + +t.dataset.sz); applySize(); render(); return; }
       if (t.dataset.dmenu) { deckMenu(t.dataset.dmenu); return; }
       if (t.dataset.open) { openCard(+t.dataset.open); return; }
       if (t.dataset.peek) { const id = deck(t.dataset.peek).cards[0]; if (id != null) viewImage(back(id), `Dorso: ${CARDS[id].loc || ''}`); return; }
@@ -587,7 +589,7 @@
       ${c.tk ? `<div>Entra en juego con <b>${c.tk} fichas de Arcano</b>${w.zone === 'mplay' ? '' : ' (la app las coloca al dejarla en juego)'}.</div>` : ''}
       ${c.rk ? `<div class="muted">Retribución: ${c.rk === 'a-' ? 'la app descarta 1 ficha de Arcano.' : c.rk === 's+' ? 'la app coloca 1 ficha de Salud.' : 'decides tú cuántas fichas.'}${c.rkn ? ` ${esc(c.rkn)}` : ''}</div>` : ''}</div>` : '';
     const tk = (w.zone === 'mplay' || w.zone === 'myst') ? tokOf(id) : null;
-    const tokRow = tk ? `<div class="tokrow">${Object.keys(TOK).map((k) => `<div class="tok ${k}"><span>${TOK[k]}</span>
+    const tokRow = tk ? `<div class="tokrow">${Object.keys(TOK).map((k) => `<div class="tok ${k}">${tokImg(k)}<span>${TOK[k]}</span>
         <button class="tkb" data-tk="${k}" data-d="-1" ${tk[k] ? '' : 'disabled'}>−</button><b>${tk[k]}</b><button class="tkb" data-tk="${k}" data-d="1">+</button></div>`).join('')}</div>` : '';
     openModal(`<div class="mbox ${land ? 'wide' : ''}">
       <div class="mhead"><div style="flex:1"><h3>${esc(cardLabel(id))}</h3><div class="sub">${where}</div>${tags}</div><button class="iconbtn" data-x>✕</button></div>
@@ -614,7 +616,7 @@
         let left = null;
         act(() => { const t = tokOf(id); t[k] = Math.max(0, t[k] + dlt); left = t[k]; log(`${cardLabel(id)}: ${dlt > 0 ? '+1' : '−1'} ficha de ${TOK[k]} (quedan ${t[k]}).`); });
         if (k === 'a' && dlt < 0 && left === 0 && c.k === 'mitos') noArcane([id]);
-        else openCard(id);
+        else { const sc = $('#modal').scrollTop; openCard(id); $('#modal').scrollTop = sc; }
         return;
       }
       const mv = e.target.closest('[data-mv]');
@@ -922,5 +924,6 @@
   if (cur) { S = cur; H = lsGet(LS_HIST, []); ui.screen = 'game'; }
   applyLayout();
   applyZoom();
+  applySize();
   render();
 })();

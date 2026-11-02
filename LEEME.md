@@ -25,10 +25,11 @@ Para usarla en el celular: `abrir-en-celular.bat` (misma red WiFi).
 - **Encuentros**: toca un mazo para robar. «Resuelta» la manda al descarte; cuando un mazo se agota se baraja su descarte. También: al fondo, arriba o barajarla en el mazo. Cerrar con ✕ cancela el robo.
 - **Expedición activa** y **Ruinas místicas**: debajo de su mazo se ve la casilla donde va la ficha (la del dorso de la primera carta).
 - **Fase de Mitos** (barra de abajo): roba la siguiente carta de Mitos. Los Eventos se descartan; los Rumores y las Activas quedan «en juego» hasta que las descartes. Se ve cuántas quedan en cada etapa.
-- **Fichas**: los Rumores entran en juego con sus fichas de Arcano (y se muestra en qué casilla va la ficha de Rumor). Toca una carta en juego —o el Misterio activo— para sumar o quitar fichas de Arcano, Pistas o Salud; las que tenga se ven sobre la carta como fichas con su ícono y el número. El botón **Retribución** descuenta solo la ficha de los Rumores que la pierden siempre, lista los que dependen de algo y avisa cuando uno se queda sin fichas.
+- **Fichas**: los Rumores entran en juego con sus fichas de Arcano (y se muestra en qué casilla va la ficha de Rumor). Toca una carta en juego —o el Misterio activo— para sumar o quitar fichas de Arcano, Pistas o Salud; las que tenga se ven arriba a la derecha de la carta con la ficha original y el número. El botón **Retribución** descuenta solo la ficha de los Rumores que la pierden siempre, lista los que dependen de algo y avisa cuando uno se queda sin fichas.
 - **Misterio activo**: «Misterio resuelto» lo pasa a resueltos y revela el siguiente.
 - **Ciudades en ruinas**: mazos de Desastres y de Encuentros de Devastación, y la lista de ciudades devastadas (al devastar una, sus Expediciones vuelven a la caja).
 - **En inglés**: al abrir una carta, arriba se ve cómo se llaman en inglés los Estados, Apoyos, Hechizos y rasgos que nombra («Estado Deuda → Debt (Deal)», «Estado AYUDA → Boon», «Apoyo único RELIQUIA → Relic»), para buscarlos rápido entre las cartas físicas.
+- **Tamaño de las cartas**: los botones − / + de abajo a la derecha achican o agrandan los mazos y las cartas en juego (se recuerda en cada dispositivo). Al abrir una carta, un toque sobre ella la amplía y otro la vuelve a su tamaño.
 - **Deshacer**: botón ↶ o Ctrl+Z. **Registro**: todas las acciones con la hora. **Menú ☰**: guardar con nombre, exportar/importar la partida (.json).
 
 ## Origen de los datos

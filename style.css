@@ -487,3 +487,30 @@ ul.rk li .chip { margin-right: 4px; }
 .viewer .flip.land .tks.big .tkn b { font-size: clamp(1.3rem, 5cqw, 2.6rem); }
 .tkn { font-style: normal; }
 .tkn { color: rgba(255, 255, 255, .38); } .tkn b { font-weight: 700; }
+/* Fichas originales arriba a la derecha de la carta */
+.tks, .tks.big { top: 3%; bottom: auto; right: 4%; left: 4%; align-items: flex-start; }
+.tkn, .tkn.a, .tkn.p, .tkn.s { background: none; border: 0; box-shadow: none; border-radius: 0; }
+.tkn img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .8)); }
+.tkn b { color: #fff; text-shadow: 0 0 3px #000, 0 0 6px #000, 0 1px 2px #000; }
+.tok img { width: 30px; height: 30px; object-fit: contain; flex: none; }
+/* Barra de arriba y pestañas siempre visibles */
+.stickyhead { position: sticky; top: 0; z-index: 20; background: linear-gradient(180deg, rgba(11, 20, 18, .98), rgba(11, 20, 18, .94)); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+.stickyhead .top { position: static; border-bottom: 0; background: none; backdrop-filter: none; }
+.stickyhead .tabs { padding-top: 2px; }
+.stickyhead .tab { padding: 6px 4px 7px; }
+/* Barra inferior: botones más anchos */
+.myth { flex: 1 1 0; min-width: 0; max-width: 190px; font-size: .8rem; padding: 7px 6px; }
+@media (min-width: 700px) { .myth { flex: 0 0 160px; font-size: .9rem; } .myth svg { width: 26px; height: 26px; } }
+/* Tamaño de cartas elegido con − / + (variable --sz) */
+:root { --sz: 1; --deckw: 104px; --codexw: 96px; --mystw: 560px; }
+@media (min-width: 700px) { :root { --deckw: 132px; --codexw: 120px; } }
+@media (min-width: 1300px) { :root { --deckw: clamp(150px, 12.5vw, 340px); --codexw: clamp(130px, 13vw, 340px); --mystw: max(560px, 44vw); } }
+.decks { grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--deckw) * var(--sz))), 1fr)) !important; }
+.codex { grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--codexw) * var(--sz))), 1fr)) !important; }
+.mystery .mcard { width: min(100%, calc(var(--mystw) * var(--sz))) !important; }
+.sizectl { position: fixed; right: 12px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 26; display: flex; gap: 6px; }
+body.hashand .sizectl { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+.sizectl button { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: rgba(26, 45, 41, .92); color: var(--gold-2); font-size: 1.5rem; line-height: 1; box-shadow: 0 4px 12px rgba(0, 0, 0, .6); }
+.sizectl button:hover { border-color: var(--gold); }
+.sizectl button:disabled { opacity: .35; }
+@media (max-width: 699px) { .sizectl { bottom: calc(90px + env(safe-area-inset-bottom, 0px)); right: 8px; } .sizectl button { width: 36px; height: 36px; font-size: 1.3rem; } }
