@@ -22,9 +22,10 @@ Para usarla en el celular: `abrir-en-celular.bat` (misma red WiFi).
 
 ## Durante la partida
 
-- **Encuentros**: toca un mazo para robar. «Resuelta» la manda al descarte; cuando un mazo se agota se baraja su descarte. También: al fondo, arriba, barajar o mover a otro mazo. Cerrar con ✕ cancela el robo.
+- **Encuentros**: toca un mazo para robar. «Resuelta» la manda al descarte; cuando un mazo se agota se baraja su descarte. También: al fondo, arriba o barajarla en el mazo. Cerrar con ✕ cancela el robo.
 - **Expedición activa** y **Ruinas místicas**: arriba se ve el dorso de la primera carta y el nombre de la casilla donde va la ficha.
 - **Fase de Mitos** (barra de abajo): roba la siguiente carta de Mitos. Los Eventos se descartan; los Rumores y las Activas quedan «en juego» hasta que las descartes. Se ve cuántas quedan en cada etapa.
+- **Fichas**: los Rumores entran en juego con sus fichas de Arcano (y se muestra en qué casilla va la ficha de Rumor). Toca una carta en juego —o el Misterio activo— para sumar o quitar fichas de Arcano, Pistas o Salud. El botón **Retribución** descuenta solo la ficha de los Rumores que la pierden siempre, lista los que dependen de algo y avisa cuando uno se queda sin fichas.
 - **Misterio activo**: «Misterio resuelto» lo pasa a resueltos y revela el siguiente.
 - **Ciudades en ruinas**: mazos de Desastres y de Encuentros de Devastación, y la lista de ciudades devastadas (al devastar una, sus Expediciones vuelven a la caja).
 - **En inglés**: al abrir una carta, arriba se ve cómo se llaman en inglés los Estados, Apoyos, Hechizos y rasgos que nombra («Estado Deuda → Debt (Deal)», «Estado AYUDA → Boon», «Apoyo único RELIQUIA → Relic»), para buscarlos rápido entre las cartas físicas.

@@ -422,3 +422,18 @@ body.hashand { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
 }
 .deck .dname { margin-top: 6px; font-family: var(--display); font-size: .98rem; line-height: 1.05; color: var(--gold-2); text-align: center; }
 .deck .dname small { display: block; margin-top: 2px; font-family: var(--body); font-size: .76rem; color: var(--muted); line-height: 1.15; }
+/* Fichas sobre cartas en juego */
+.tks { position: absolute; right: 4px; bottom: 4px; display: flex; gap: 3px; }
+.mystery .mcard { position: relative; }
+.tk { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 5px; border-radius: 99px; font-size: .85rem; color: #fff; border: 1px solid rgba(255, 255, 255, .5); box-shadow: 0 2px 6px rgba(0, 0, 0, .6); }
+.tk.a { background: #7d3c98; } .tk.p { background: #2f8a4c; } .tk.s { background: #b23a2a; }
+.tokrow { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+.tok { flex: 1 1 140px; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--ink-3); }
+.tok span { flex: 1; font-size: .95rem; }
+.tok b { min-width: 1.6em; text-align: center; font-family: var(--display); font-size: 1.35rem; color: var(--gold-2); }
+.tok.a { border-color: #9b59b6; } .tok.p { border-color: #3fae63; } .tok.s { border-color: #c2412e; }
+.tkb { width: 36px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--ink); color: var(--parch); font-size: 1.2rem; line-height: 1; }
+.tkb:disabled { opacity: .35; }
+.myth.rck svg { color: #c39bd3; }
+ul.rk { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+ul.rk li .chip { margin-right: 4px; }

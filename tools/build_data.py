@@ -11,6 +11,7 @@ import json, os, re, glob, collections, unicodedata
 import numpy as np
 from PIL import Image
 from hints import Hinter
+from glossary import MYTHOS_TOKENS
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WORK = os.path.join(HERE, 'work')
@@ -166,6 +167,7 @@ def main():
             n = title_top(L, 0.08)
             if n: c['loc'] = polish(pretty(n))
         c.update(FIX.get(i, {}))
+        c.update(MYTHOS_TOKENS.get(i, {}))
     # imágenes
     os.makedirs(os.path.join(APP, 'img', 'c'), exist_ok=True)
     import shutil

@@ -24,6 +24,7 @@
     myth: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 4c-3 3-3 13 0 16M12 4c3 3 3 13 0 16M4 12h16"/></svg>',
     myst: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3 4 7v6c0 4 3.5 7 8 8 4.5-1 8-4 8-8V7Z"/><path d="M10 10a2 2 0 1 1 3 1.7c-.7.4-1 .9-1 1.6M12 16.5v.01"/></svg>',
     disaster: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7Z"/></svg>',
+    reck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/><path d="M12 8v5l3 2"/></svg>',
   };
 
   // ---------- utilidades ----------
@@ -206,7 +207,7 @@
     S = {
       v: 1, ao: A.id, exps: [...exps], created: Date.now(), name: A.name,
       decks: {}, order: [], pending: [], log: [], dev: [], advs: [],
-      myth: { cards: [], disc: [], play: [] }, mst: {}, myst: { cards: [], active: null, solved: [] },
+      myth: { cards: [], disc: [], play: [] }, mst: {}, myst: { cards: [], active: null, solved: [] }, tok: {},
       prelude: null, cfg: { preset: cfg.preset, pct: cfgPct(cfg), order: cfg.order },
     };
     H = [];
@@ -231,7 +232,7 @@
     const m = buildMythos(A, cfg, planMythos(A, cfg, aside ? [aside.id] : []));
     S.myth.cards = m.cards; S.mst = m.stageOf;
     if (aside) {
-      if (fx.mythPlayUnless && fx.mythPlayUnless !== A.id) { S.myth.play.push(aside.id); log(`Preludio: la carta de Mitos ${aside.n} entra en juego (con 2 fichas de Arcano).`); }
+      if (fx.mythPlayUnless && fx.mythPlayUnless !== A.id) { S.myth.play.push(aside.id); S.tok[aside.id] = { a: 2, p: 0, s: 0 }; log(`Preludio: la carta de Mitos ${aside.n} entra en juego (con 2 fichas de Arcano).`); }
       else log(`Preludio: la carta de Mitos ${aside.n} se aparta y vuelve a la caja.`);
     }
     // Misterios
@@ -272,12 +273,20 @@
     if (S.pending.some((p) => p.id === id)) return { zone: 'pending' };
     return { zone: 'none' };
   }
+  // Fichas sobre cartas en juego (Mitos y Misterio activo): { id: { a: Arcano, p: Pistas, s: Salud } }
+  const toks = () => S.tok || (S.tok = {});
+  const tokOf = (id) => toks()[id] || (toks()[id] = { a: 0, p: 0, s: 0 });
+  const TOK = { a: 'Arcano', p: 'Pistas', s: 'Salud' };
+  const tokBadges = (id) => { const t = toks()[id]; if (!t) return ''; return Object.keys(TOK).filter((k) => t[k]).map((k) => `<b class="tk ${k}">${t[k]}</b>`).join(''); };
   // pos: 'top' | 'bottom' | 'random' | 'disc'
   function place(id, deckId, pos) {
     removeEverywhere(id);
     if (deckId === 'MY') {
       if (pos === 'disc') S.myth.disc.push(id); else if (pos === 'play') S.myth.play.push(id);
       else if (pos === 'bottom') S.myth.cards.push(id); else S.myth.cards.unshift(id);
+      // fichas: al entrar en juego, las de Arcano que indica la carta; al salir, se descartan
+      if (pos === 'play') { if (!toks()[id]) toks()[id] = { a: CARDS[id].tk || 0, p: 0, s: 0 }; }
+      else delete toks()[id];
       return;
     }
     const d = deck(deckId); if (!d) return;
@@ -349,6 +358,7 @@
       <nav class="mythos">
         <button class="myth mph" data-m="mythos">${ICON.myth}Fase de<br>Mitos<small>(${S.myth.cards.length})</small></button>
         <button class="myth mys" data-m="myst">${ICON.myst}Misterio<br>activo</button>
+        ${S.myth.play.length ? `<button class="myth rck" data-m="reck">${ICON.reck}Retri-<br>bución</button>` : ''}
         ${S.decks.desastre ? `<button class="myth dis" data-m="disaster">${ICON.disaster}Resolver<br>Desastre</button>` : ''}
       </nav></footer>`;
     document.body.classList.toggle('hashand', S.pending.length > 0);
@@ -401,7 +411,7 @@
     const act0 = S.myst.active;
     let h = `<h2 class="sec">Misterio activo</h2>
       <div class="mystery">
-        ${act0 != null ? `<div class="mcard" data-open="${act0}" style="aspect-ratio:${ratio(act0)}"><img src="${face(act0)}" alt=""></div>` : `<div class="panel muted">No hay Misterio activo${S.myst.solved.length >= 3 ? ': ¡ya se resolvieron 3!' : '.'}</div>`}
+        ${act0 != null ? `<div class="mcard" data-open="${act0}" style="aspect-ratio:${ratio(act0)}"><img src="${face(act0)}" alt=""><div class="tks">${tokBadges(act0)}</div></div>` : `<div class="panel muted">No hay Misterio activo${S.myst.solved.length >= 3 ? ': ¡ya se resolvieron 3!' : '.'}</div>`}
         <div class="row"><span class="pill">Resueltos: <b>${S.myst.solved.length}</b> / 3</span><span class="muted">${S.myst.cards.length} en el mazo</span><span class="spacer"></span>
           ${act0 != null ? `<button class="btn gold" data-a="solve">Misterio resuelto</button>` : S.myst.cards.length ? `<button class="btn" data-a="nextmyst">Robar Misterio</button>` : ''}</div>
         ${S.myst.solved.length ? `<div class="chips">${S.myst.solved.map((id) => `<button class="chip" data-open="${id}">✓ ${esc(CARDS[id].n || 'Misterio')}</button>`).join('')}</div>` : ''}
@@ -414,7 +424,8 @@
         ${S.cfg?.pct ? `<div class="muted" style="font-size:.85rem;margin-top:6px">Dificultad: ${S.cfg.pct.E}% fáciles · ${S.cfg.pct.N}% normales · ${S.cfg.pct.H}% difíciles${S.cfg.order === 'prog' ? ' · progresivo' : ''}</div>` : ''}
       </div>
       <h2 class="sec">Cartas de Mitos en juego</h2>
-      ${m.play.length ? `<div class="codex">${m.play.map((id) => `<div class="c" data-open="${id}"><img src="${face(id)}" loading="lazy" alt=""><span>${esc(MTYPE[CARDS[id].ty] || 'Mitos')}</span></div>`).join('')}</div>` : '<p class="muted">No hay Rumores ni cartas de Mitos Activas en juego.</p>'}
+      ${m.play.length ? `<div class="codex">${m.play.map((id) => `<div class="c" data-open="${id}"><img src="${face(id)}" loading="lazy" alt=""><span>${esc(MTYPE[CARDS[id].ty] || 'Mitos')}</span><div class="tks">${tokBadges(id)}</div></div>`).join('')}</div>
+        <div class="row" style="margin-top:8px"><span class="muted">Toca una carta para sumar o quitar fichas.</span><span class="spacer"></span><button class="btn" data-m="reck">${ICON.reck} Retribución</button></div>` : '<p class="muted">No hay Rumores ni cartas de Mitos Activas en juego.</p>'}
       ${m.disc.length ? `<div class="chips"><button class="chip" data-a="mdisc">Ver descarte de Mitos (${m.disc.length})</button></div>` : ''}`;
     if (S.decks.desastre) {
       h += `<h2 class="sec">Desastres</h2><div class="decks">${tileHTML(deck('desastre'))}</div>`;
@@ -442,6 +453,7 @@
         if (m === 'mythos') mythosPhase();
         else if (m === 'myst') { if (S.myst.active != null) openCard(S.myst.active); else { ui.tab = 'mythos'; render(); } }
         else if (m === 'disaster') drawAndOpen('desastre');
+        else if (m === 'reck') reckoning();
         return;
       }
       const a = t.dataset.a;
@@ -480,12 +492,42 @@
     const id = S.myst.active; if (id == null) return;
     let next = null;
     act(() => {
-      S.myst.solved.push(id); S.myst.active = null;
+      S.myst.solved.push(id); S.myst.active = null; delete toks()[id];
       log(`Misterio resuelto: ${CARDS[id].n || '¿?'} (${S.myst.solved.length}/3).`);
       if (S.myst.solved.length < 3 && S.myst.cards.length) { next = S.myst.cards.shift(); S.myst.active = next; log(`Nuevo Misterio: ${CARDS[next].n || '¿?'}.`); }
     });
     if (S.myst.solved.length >= 3) alertModal('¡Tres Misterios resueltos!', 'Si el Primigenio no ha despertado, <b>los investigadores ganan la partida</b>. Si ya despertó, falta resolver el Misterio final de la hoja.');
     else if (next != null) openCard(next, { info: 'Nuevo Misterio activo: resuelve su efecto «Cuando esta carta entra en juego».', readonly: true });
+  }
+  // Aviso cuando a un Rumor se le acaban las fichas de Arcano
+  function noArcane(ids) {
+    alertModal('Sin fichas de Arcano', `${ids.map((x) => `<b>${esc(CARDS[x].n || cardLabel(x))}</b>`).join(', ')}: resuelve ahora el efecto «Cuando no queden fichas de Arcano sobre esta carta…».
+      <div class="chips">${ids.map((x) => `<button class="chip" data-open="${x}">Ver ${esc(CARDS[x].n || 'carta')}</button>`).join('')}</div>`);
+  }
+  // Retribución de las cartas de Mitos en juego: la app aplica las fichas que no dependen de nada y lista el resto
+  function reckoning() {
+    const play = [...S.myth.play];
+    if (!play.length) { toast('No hay cartas de Mitos en juego.'); return; }
+    const auto = [], ask = [], other = [], empty = [];
+    act(() => {
+      for (const id of play) {
+        const c = CARDS[id], t = tokOf(id);
+        if (c.rk === 'a-') { if (t.a > 0) { t.a--; if (!t.a) empty.push(id); } auto.push([id, `−1 Arcano (quedan ${t.a})`]); }
+        else if (c.rk === 's+') { t.s++; auto.push([id, `+1 Salud (hay ${t.s})`]); }
+        else if (c.rk) ask.push(id);
+        else other.push(id);
+      }
+      log(`Retribución: ${auto.map(([id, s]) => `${CARDS[id].n} ${s}`).join(' · ') || 'sin cambios automáticos'}.`);
+    });
+    const row = (id, txt) => `<li><button class="chip" data-open="${id}">${esc(CARDS[id].n || cardLabel(id))}</button> ${txt}</li>`;
+    openModal(`<div class="mbox"><div class="mhead"><h3>Retribución</h3><button class="iconbtn" data-x>✕</button></div>
+      ${auto.length ? `<div class="panel"><b>Hecho por la app</b><ul class="rk">${auto.map(([id, s]) => row(id, `${s}${CARDS[id].rkn ? `<div class="muted">${esc(CARDS[id].rkn)}</div>` : ''}`)).join('')}</ul></div>` : ''}
+      ${empty.length ? `<div class="note warn"><b>Sin fichas de Arcano:</b> ${empty.map((x) => esc(CARDS[x].n)).join(', ')}. Resuelve su efecto «Cuando no queden fichas de Arcano…».</div>` : ''}
+      ${ask.length ? `<div class="panel" style="margin-top:10px"><b>Decides tú</b> <span class="muted">(abre la carta y usa − / +)</span><ul class="rk">${ask.map((id) => row(id, `<div class="muted">${esc(CARDS[id].rkn || '')}</div>`)).join('')}</ul></div>` : ''}
+      ${other.length ? `<div class="panel" style="margin-top:10px"><b>Revisa también su efecto de Retribución</b><ul class="rk">${other.map((id) => row(id, '')).join('')}</ul></div>` : ''}
+      <p class="muted" style="font-size:.85rem">La Retribución también afecta a Monstruos, al Primigenio, pertenencias y Estados: eso sigue siendo en la mesa.</p>
+      <div class="actions"><button class="btn primary full" data-x>Hecho</button></div></div>`,
+      (e) => { const o = e.target.closest('[data-open]'); if (o) openCard(+o.dataset.open); });
   }
   function pickAdventure() {
     const d = deck('aventura');
@@ -526,8 +568,7 @@
       actions = `<button class="btn primary" data-mv="${esc(p.from)}" data-pos="disc">Resuelta<small>al descarte de ${esc(fromDeck?.name || '')}</small></button>
         <button class="btn" data-mv="${esc(p.from)}" data-pos="bottom">Al fondo del mazo</button>
         <button class="btn" data-mv="${esc(p.from)}" data-pos="top">Devolver arriba</button>
-        <button class="btn" data-mv="${esc(p.from)}" data-pos="random">Barajar en el mazo</button>
-        <button class="btn full" data-do="move">Mover a otro mazo…</button>`;
+        <button class="btn" data-mv="${esc(p.from)}" data-pos="random">Barajar en el mazo</button>`;
     } else if (w.zone === 'mplay') {
       actions = `<button class="btn primary" data-mv="MY" data-pos="disc">Descartar<small>${c.ty === 'rumor' ? 'Rumor resuelto o terminado' : 'ya no está en juego'}</small></button><button class="btn" data-x>Cerrar</button>`;
     } else if (w.zone === 'myst') {
@@ -541,10 +582,19 @@
       : w.zone === 'mplay' ? 'En juego' : w.zone === 'myst' ? 'Misterio activo' : w.zone === 'solved' ? 'Misterio resuelto' : w.deck ? `${esc(deck(w.deck).name)}${w.zone === 'disc' ? ' (descarte)' : ''}` : '';
     const tags = c.k === 'mitos' ? `<div class="tags"><span class="dot ${c.c}"></span>${esc(COLOR[c.c] || '')} · ${esc(MTYPE[c.ty] || '¿tipo?')} · ${esc(DIFF[c.df] || '')}</div>` : '';
     const land = ratio(id) > 1;
+    // Rumores: casilla de la ficha de Rumor, fichas de Arcano iniciales y qué hace la Retribución
+    const rumor = c.k === 'mitos' && (c.rl || c.tk || c.rkn) && w.zone !== 'mdisc' ? `<div class="note" style="margin:0 0 10px">
+      ${c.rl ? `<div>Ficha de Rumor en <b>${esc(c.rl)}</b>.</div>` : ''}
+      ${c.tk ? `<div>Entra en juego con <b>${c.tk} fichas de Arcano</b>${w.zone === 'mplay' ? '' : ' (la app las coloca al dejarla en juego)'}.</div>` : ''}
+      ${c.rk ? `<div class="muted">Retribución: ${c.rk === 'a-' ? 'la app descarta 1 ficha de Arcano.' : c.rk === 's+' ? 'la app coloca 1 ficha de Salud.' : 'decides tú cuántas fichas.'}${c.rkn ? ` ${esc(c.rkn)}` : ''}</div>` : ''}</div>` : '';
+    const tk = (w.zone === 'mplay' || w.zone === 'myst') ? tokOf(id) : null;
+    const tokRow = tk ? `<div class="tokrow">${Object.keys(TOK).map((k) => `<div class="tok ${k}"><span>${TOK[k]}</span>
+        <button class="tkb" data-tk="${k}" data-d="-1" ${tk[k] ? '' : 'disabled'}>−</button><b>${tk[k]}</b><button class="tkb" data-tk="${k}" data-d="1">+</button></div>`).join('')}</div>` : '';
     openModal(`<div class="mbox ${land ? 'wide' : ''}">
       <div class="mhead"><div style="flex:1"><h3>${esc(cardLabel(id))}</h3><div class="sub">${where}</div>${tags}</div><button class="iconbtn" data-x>✕</button></div>
       ${opt.info ? `<div class="note" style="margin:0 0 10px">${opt.info}</div>` : ''}
       ${c.tr ? `<div class="note en" style="margin:0 0 10px">${esc(c.tr)}</div>` : ''}
+      ${rumor}${tokRow}
       ${englishHTML(c)}
       <div class="viewer"><div class="flip ${land ? 'land' : ''}" id="flipper" style="aspect-ratio:${ratio(id)}">
         <div class="face a"><img src="${face(id)}" alt="" draggable="false"></div>
@@ -558,6 +608,15 @@
         // doble clic / doble toque: ampliar o volver al tamaño normal (detección propia para que ande igual en el celular)
         const now = Date.now();
         if (now - lastTap < 350) { lastTap = 0; toggleZoom(); } else lastTap = now;
+        return;
+      }
+      const tb = e.target.closest('[data-tk]');
+      if (tb) {
+        const k = tb.dataset.tk, dlt = +tb.dataset.d;
+        let left = null;
+        act(() => { const t = tokOf(id); t[k] = Math.max(0, t[k] + dlt); left = t[k]; log(`${cardLabel(id)}: ${dlt > 0 ? '+1' : '−1'} ficha de ${TOK[k]} (quedan ${t[k]}).`); });
+        if (k === 'a' && dlt < 0 && left === 0 && c.k === 'mitos') noArcane([id]);
+        else openCard(id);
         return;
       }
       const mv = e.target.closest('[data-mv]');
@@ -578,7 +637,6 @@
       }
       const d = e.target.closest('[data-do]'); if (!d) return;
       const k = d.dataset.do;
-      if (k === 'move') { moveModal(id); return; }
       if (k === 'solve') { closeModal(); solveMystery(); return; }
       closeModal();
       act(() => {
@@ -586,28 +644,6 @@
         else if (k === 'advdone') { removeEverywhere(id); log(`Aventura completada: ${CARDS[id].n || ''}.`); }
       });
     }, opt.fresh && p ? () => { if (S.pending.some((x) => x.id === id)) undo('Robo cancelado: la carta volvió a su lugar'); } : null);
-  }
-
-  function moveModal(id) {
-    let pos = 'top';
-    const targets = S.order.filter((d) => d !== 'aventura');
-    const html = () => `<div class="mbox"><div class="mhead"><h3>Mover ${esc(cardLabel(id))}</h3><button class="iconbtn" data-x>✕</button></div>
-      <p class="muted" style="margin:0 0 6px">Posición</p>
-      <div class="chips" style="margin-bottom:12px">${[['top', 'Arriba'], ['bottom', 'Al fondo'], ['random', 'Barajada'], ['disc', 'Descarte']].map(([k, l]) => `<button class="chip ${pos === k ? 'on' : ''}" data-pos="${k}">${l}</button>`).join('')}</div>
-      <p class="muted" style="margin:0 0 6px">Mazo destino</p>
-      <div class="targets">${targets.map((d) => `<button class="btn" data-to="${esc(d)}">${esc(deck(d).name)} <span class="muted">(${deck(d).cards.length})</span></button>`).join('')}
-        <button class="btn" data-to="#box">Devolver a la caja</button></div></div>`;
-    openModal(html(), (e) => {
-      const pb = e.target.closest('[data-pos]');
-      if (pb) { pos = pb.dataset.pos; $('#modal').innerHTML = html(); return; }
-      const tb = e.target.closest('[data-to]'); if (!tb) return;
-      const to = tb.dataset.to;
-      closeModal();
-      act(() => {
-        if (to === '#box') { removeEverywhere(id); log(`${cardLabel(id)} vuelve a la caja.`); }
-        else { place(id, to, pos); log(`${cardLabel(id)} → ${deck(to).name}, ${posLabel(pos)}.`); }
-      });
-    });
   }
 
   // ---------- menús ----------
@@ -868,7 +904,10 @@
     if (e.key === 'Escape' && !$('#modal').hidden) dismissModal();
     if ((e.ctrlKey || e.metaKey) && e.key === 'z' && ui.screen === 'game' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); undo(); }
   });
-  function alertModal(title, html) { openModal(`<div class="mbox"><div class="mhead"><h3>${esc(title)}</h3></div><div class="note warn">${html}</div><div class="actions"><button class="btn primary full" data-x>Entendido</button></div></div>`); }
+  function alertModal(title, html) {
+    openModal(`<div class="mbox"><div class="mhead"><h3>${esc(title)}</h3></div><div class="note warn">${html}</div><div class="actions"><button class="btn primary full" data-x>Entendido</button></div></div>`,
+      (e) => { const o = e.target.closest('[data-open]'); if (o && S) openCard(+o.dataset.open); });
+  }
   function confirmModal(title, html, onOk, okLabel = 'Confirmar') {
     openModal(`<div class="mbox"><div class="mhead"><h3>${title}</h3></div><p>${html}</p><div class="actions"><button class="btn" data-x>Cancelar</button><button class="btn primary" data-ok>${okLabel}</button></div></div>`,
       (e) => { if (e.target.closest('[data-ok]')) { closeModal(); onOk(); } });

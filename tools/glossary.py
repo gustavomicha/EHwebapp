@@ -63,6 +63,41 @@ TITLE_WORDS = {
     'mistico': 'místico', 'misticas': 'místicas', 'oceano': 'océano', 'ultimo': 'último', 'ultima': 'última',
 }
 
+# Fichas de las cartas de Mitos RUMOR (leído a mano de los íconos y del texto de cada carta).
+# tk: fichas de Arcano al entrar en juego (ícono violeta con número). rl: casilla de la ficha de Rumor.
+# rk: qué hace la Retribución con las fichas:
+#   'a-'  descarta 1 ficha de Arcano siempre (la app lo hace sola)
+#   'a?'  depende de algo (la app avisa y lo decides tú); rkn explica la condición
+#   's+'  coloca 1 ficha de Salud (la app lo hace sola)
+MYTHOS_TOKENS = {
+    117: {'rl': 'Casilla 17', 'rk': 's+'},
+    118: {'rl': 'Casilla 19'},
+    119: {'tk': 3, 'rk': 'a?', 'rkn': 'Descarta 1 ficha de Arcano a menos que el grupo gaste Pistas igual a la mitad de los investigadores.'},
+    120: {'tk': 3, 'rk': 'a-'},
+    121: {'rl': 'Casilla 13'},
+    122: {'tk': 4, 'rk': 'a-'},
+    123: {'rl': 'Casilla 7'},
+    124: {'tk': 4, 'rl': 'Casilla 16', 'rk': 'a-', 'rkn': 'Antes, devuelve a la caja los Apoyos de valor igual o mayor que las fichas de Arcano.'},
+    125: {'tk': 4, 'rl': 'Casilla 2', 'rk': 'a-'},
+    126: {'tk': 4, 'rl': 'Casilla 8', 'rk': 'a?', 'rkn': 'El investigador jefe obtiene un Estado LOCURA y descarta 1 ficha de Arcano por cada Estado LOCURA que tenga.'},
+    127: {'tk': 8, 'rl': 'Casilla 11', 'rk': 'a?', 'rkn': 'Descarta fichas de Arcano igual a la mitad de los Portales del tablero.'},
+    535: {'tk': 3, 'rl': 'Casilla 18', 'rk': 'a-'},
+    536: {'rl': 'Casilla 10'},
+    678: {'rl': 'Casilla 21'},
+    679: {'tk': 4, 'rk': 'a-'},
+    680: {'tk': 2, 'rl': 'Londres', 'rk': 'a-'},
+    681: {'tk': 3, 'rk': 'a-', 'rkn': 'Después, se barajan los mazos de Expedición y de Ruinas místicas a menos que el grupo gaste 1 Pista.'},
+    682: {'tk': 4, 'rk': 'a-'},
+    813: {'tk': 5, 'rl': 'El Himalaya', 'rk': 'a-', 'rkn': 'Antes, cada investigador sufre una discapacidad de su habilidad más alta.'},
+    814: {'tk': 4, 'rk': 'a-', 'rkn': 'Descarta 1 Apoyo de la reserva y la ficha de Arcano va a ese espacio.'},
+    815: {'tk': 3, 'rl': 'Antártida', 'rk': 'a-'},
+    816: {'tk': 2, 'rl': 'Las pirámides', 'rk': 'a?', 'rkn': 'Descarta 1 ficha de Arcano a menos que el investigador jefe obtenga el Estado Pacto oscuro.'},
+    817: {'tk': 1, 'rl': 'Londres', 'rk': 'a?', 'rkn': 'El grupo pierde Cordura igual a las fichas de Arcano salvo que el jefe obtenga Aflicción; si no la obtiene, coloca 1 ficha de Arcano.'},
+    944: {'rl': 'El corazón de África'},
+    945: {'tk': 3, 'rl': 'Tunguska', 'rk': 'a-'},
+    946: {'tk': 3, 'rl': 'San Francisco', 'rk': 'a-', 'rkn': 'Antes, cada investigador obtiene 1 Estado LOCURA a menos que descarte 1 pertenencia OBJETO o BARATIJA.'},
+}
+
 # Correcciones manuales del diccionario de nombres (español -> inglés)
 NAMES_FIX = {}
 
