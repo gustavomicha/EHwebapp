@@ -757,12 +757,10 @@
   function englishHTML(c) {
     const en = c.en || [];
     if (!en.length) return '';
-    const item = ([es, eng]) => `${esc(es)} → <i>${esc(eng)}</i>`;
-    const names = en.filter((x) => x[2] === 'n'), traits = en.filter((x) => x[2] === 'r'), terms = en.filter((x) => x[2] === 't');
-    return `<div class="note en" style="margin:0 0 10px">
-      ${names.length ? `<div><b>En inglés:</b> ${names.map(item).join(' · ')}</div>` : ''}
-      ${traits.length ? `<div><b>Rasgos:</b> ${traits.map(item).join(' · ')}</div>` : ''}
-      ${terms.length ? `<div class="terms">${terms.map(item).join(' · ')}</div>` : ''}</div>`;
+    // un solo renglón compacto, sin rótulos: primero nombres y rasgos (lo que hay que buscar en las cartas), después términos
+    const order = { n: 0, r: 1, t: 2 };
+    const item = ([es, eng, k]) => `<span class="${k === 't' ? 'term' : ''}">${esc(es)} → <i>${esc(eng)}</i></span>`;
+    return `<div class="note en compact">${[...en].sort((a, b) => order[a[2]] - order[b[2]]).map(item).join(' · ')}</div>`;
   }
 
   // ---------- guardado ----------

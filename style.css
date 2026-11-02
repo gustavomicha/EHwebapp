@@ -514,3 +514,5 @@ body.hashand .sizectl { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); 
 .sizectl button:hover { border-color: var(--gold); }
 .sizectl button:disabled { opacity: .35; }
 @media (max-width: 699px) { .sizectl { bottom: calc(90px + env(safe-area-inset-bottom, 0px)); right: 8px; } .sizectl button { width: 36px; height: 36px; font-size: 1.3rem; } }
+.note.en.compact { margin: 0 0 8px; padding: 6px 10px; font-size: .92rem; line-height: 1.35; }
+.note.en.compact .term { color: var(--muted); }
