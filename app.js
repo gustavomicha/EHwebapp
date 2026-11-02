@@ -277,7 +277,16 @@
   const toks = () => S.tok || (S.tok = {});
   const tokOf = (id) => toks()[id] || (toks()[id] = { a: 0, p: 0, s: 0 });
   const TOK = { a: 'Arcano', p: 'Pistas', s: 'Salud' };
-  const tokBadges = (id) => { const t = toks()[id]; if (!t) return ''; return Object.keys(TOK).filter((k) => t[k]).map((k) => `<b class="tk ${k}">${t[k]}</b>`).join(''); };
+  // Fichas sobre la carta como recordatorio visual: ícono del tipo de ficha con el número encima (sólo si hay alguna)
+  const TOK_ICON = {
+    a: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/><path d="M12 2v2.2M12 19.8V22M5 4l1.4 1.8M19 4l-1.4 1.8M5 20l1.4-1.8M19 20l-1.4-1.8"/></svg>',
+    p: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5.5 5.5"/></svg>',
+    s: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.5-9.3C1 8.2 3.2 4.5 6.9 4.5c2.1 0 3.6 1.2 5.1 3 1.5-1.8 3-3 5.1-3 3.7 0 5.9 3.7 4.4 7.2C19.5 16.4 12 21 12 21Z"/></svg>',
+  };
+  const tokBadges = (id) => {
+    const t = toks()[id]; if (!t) return '';
+    return Object.keys(TOK).filter((k) => t[k]).map((k) => `<i class="tkn ${k}" title="${t[k]} ${TOK[k]}">${TOK_ICON[k]}<b>${t[k]}</b></i>`).join('');
+  };
   // pos: 'top' | 'bottom' | 'random' | 'disc'
   function place(id, deckId, pos) {
     removeEverywhere(id);
@@ -587,7 +596,7 @@
       ${rumor}${tokRow}
       ${englishHTML(c)}
       <div class="viewer"><div class="flip ${land ? 'land' : ''}" id="flipper" style="aspect-ratio:${ratio(id)}">
-        <div class="face a"><img src="${face(id)}" alt="" draggable="false"></div>
+        <div class="face a"><img src="${face(id)}" alt="" draggable="false">${tk ? `<div class="tks big">${tokBadges(id)}</div>` : ''}</div>
       </div></div>
       <div class="fliphint"><button class="chip" data-zoom>${isZoom() ? '− Achicar' : '🔍 Ampliar'}</button> · toca la carta para ${isZoom() ? 'achicar' : 'ampliar'}</div>
       <div class="actions">${actions}</div>
