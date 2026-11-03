@@ -191,11 +191,20 @@
   const deck = (id) => S.decks[id];
   const ao = () => AOS.find((a) => a.id === S.ao);
 
-  function log(msg) { S.log.unshift({ t: Date.now(), m: msg }); if (S.log.length > 600) S.log.length = 600; }
+  // Partida compartida: NET != null cuando la partida vive en Firebase (ver «partida compartida» más abajo).
+  let NET = null;
+  // card: carta robada (para que los demás puedan abrirla desde el aviso)
+  function log(msg, card) {
+    const e = { t: Date.now(), m: msg };
+    if (card != null) e.c = card;
+    if (NET) { e.who = meLabel(); e.pid = me().id; NET.out.push(e); }
+    S.log.unshift(e); if (S.log.length > 600) S.log.length = 600;
+  }
   function snap() { H.push(JSON.stringify(S)); if (H.length > HIST_MAX) H.shift(); }
-  function persist() { if (!S) return; lsSet(LS_CUR, S); lsSet(LS_HIST, H.slice(-40)); }
-  function act(fn) { snap(); fn(); persist(); render(); }
+  function persist() { if (!S || NET) return; lsSet(LS_CUR, S); lsSet(LS_HIST, H.slice(-40)); }
+  function act(fn) { if (NET) { netAct(fn); return; } snap(); fn(); persist(); render(); }
   function undo(msg) {
+    if (NET) { netUndo(msg); return; }
     if (!H.length) return;
     const last = S.log[0]?.m;
     S = JSON.parse(H.pop());
@@ -310,8 +319,8 @@
     if (deckId === 'MY') {
       if (!S.myth.cards.length) return null;
       const id = S.myth.cards.shift();
-      S.pending.push({ id, from: 'MY' });
-      log(`Fase de Mitos: se roba ${cardLabel(id)} (etapa ${S.mst[id] || '?'}).`);
+      S.pending.push({ id, from: 'MY', by: NET ? meLabel() : undefined });
+      log(`Fase de Mitos: se roba ${cardLabel(id)} (etapa ${S.mst[id] || '?'}).`, id);
       return id;
     }
     const d = deck(deckId);
@@ -326,8 +335,8 @@
     if (where === 'bottom') id = d.cards.pop();
     else if (where === 'random') id = d.cards.splice(Math.floor(Math.random() * d.cards.length), 1)[0];
     else id = d.cards.shift();
-    S.pending.push({ id, from: deckId });
-    log(`Se roba ${where === 'bottom' ? 'de abajo ' : where === 'random' ? 'al azar ' : ''}de ${d.name}: ${cardLabel(id)}.`);
+    S.pending.push({ id, from: deckId, by: NET ? meLabel() : undefined });
+    log(`Se roba ${where === 'bottom' ? 'de abajo ' : where === 'random' ? 'al azar ' : ''}de ${d.name}: ${cardLabel(id)}.`, id);
     return id;
   }
   const topLoc = (deckId) => { const d = S.decks[deckId]; const id = d?.cards[0]; return id != null ? CARDS[id].loc || '¿?' : null; };
@@ -342,9 +351,10 @@
       <div class="stickyhead"><header class="top">
         <span class="sign sm"><span class="wordmark sm">Eldritch<br>Horror</span></span>
         <div class="title"><b>${esc(A.name)}</b><small>${S.exps.map((e) => EXP_NAME[e]).join(' · ')} · Misterios ${solved}/3</small></div>
+        ${NET ? sessionChipHTML() : ''}
         <button class="iconbtn" data-a="layout" title="${isCols() ? 'Una columna con pestañas' : 'Dos columnas'}">${isCols() ? ICON.single : ICON.cols}</button>
         <button class="iconbtn" data-a="sheet" title="Hoja de Primigenio">${ICON.sheet}</button>
-        <button class="iconbtn" data-a="undo" title="Deshacer" ${H.length ? '' : 'disabled'}>${ICON.undo}</button>
+        <button class="iconbtn" data-a="undo" title="Deshacer" ${H.length || NET ? '' : 'disabled'}>${ICON.undo}</button>
         <button class="iconbtn" data-a="menu" title="Menú">${ICON.menu}</button>
       </header>
       <nav class="tabs">
@@ -362,7 +372,7 @@
       <footer class="foot">
       ${S.pending.length ? `<div class="mythos hand">
         <span class="muted" style="align-self:center;padding:0 6px;white-space:nowrap">En mano:</span>
-        ${S.pending.map((p) => `<button class="chip" data-open="${p.id}">${esc(cardLabel(p.id))}</button>`).join('')}
+        ${S.pending.map((p) => `<button class="chip" data-open="${p.id}">${p.by ? `<b>${esc(p.by.split(' (')[0])}:</b> ` : ''}${esc(cardLabel(p.id))}</button>`).join('')}
       </div>` : ''}
       <nav class="mythos">
         <button class="myth mph" data-m="mythos">${ICON.myth}Fase de<br>Mitos<small>(${S.myth.cards.length})</small></button>
@@ -436,7 +446,7 @@
   }
 
   function logHTML() {
-    return `<h2 class="sec">Registro</h2><ul class="log">${S.log.slice(0, 250).map((l) => `<li><time>${timeStr(l.t)}</time><span>${esc(l.m)}</span></li>`).join('')}</ul>`;
+    return `<h2 class="sec">Registro</h2><ul class="log">${S.log.slice(0, 250).map((l) => `<li><time>${timeStr(l.t)}</time><span>${l.who ? `<b class="who">${esc(l.who)}</b> ` : ''}${esc(l.m)}</span></li>`).join('')}</ul>`;
   }
 
   function bindGame() {
@@ -467,6 +477,7 @@
       else if (a === 'nextmyst') act(() => { S.myst.active = S.myst.cards.shift(); log(`Nuevo Misterio: ${CARDS[S.myst.active].n || '¿?'}.`); });
       else if (a === 'mdisc') browseList([...S.myth.disc].reverse(), 'Descarte de Mitos', 'La primera es la última descartada.');
       else if (a === 'devmenu') devastationModal();
+      else if (a === 'session') sessionModal();
     };
   }
 
@@ -626,7 +637,7 @@
         act(() => {
           place(id, to, pos);
           const dn = to === 'MY' ? 'Mitos' : deck(to).name;
-          log(`${cardLabel(id)} → ${dn}, ${posLabel(pos)}.`);
+          log(`${cardLabel(id)} → ${dn}, ${posLabel(pos)}.`, id);
           if ((to === 'expedicion' || to === 'ruinas') && pos === 'disc') {
             const loc = topLoc(to);
             log(`La ficha de ${to === 'expedicion' ? 'Expedición activa' : 'Ruinas místicas'} se mueve a ${loc || '¿?'}.`);
@@ -709,6 +720,7 @@
   function mainMenu() {
     openModal(`<div class="mbox"><div class="mhead"><h3>Menú</h3><button class="iconbtn" data-x>✕</button></div>
       <div class="menu">
+        ${NET ? `<button class="btn primary" data-k="session">Partida compartida · ${esc(NET.code)}</button>` : '<button class="btn primary" data-k="share">Compartir partida (varios dispositivos)…</button>'}
         <button class="btn" data-k="setup">Resumen de la preparación</button>
         <button class="btn" data-k="save">Guardar partida con nombre…</button>
         <button class="btn" data-k="export">Exportar partida a archivo (.json)</button>
@@ -718,10 +730,12 @@
       const b = e.target.closest('[data-k]'); if (!b) return;
       const k = b.dataset.k;
       if (k === 'setup') showSetupSummary(false);
+      else if (k === 'share') shareGame();
+      else if (k === 'session') sessionModal();
       else if (k === 'save') saveNamed();
       else if (k === 'export') { exportGame(); closeModal(); }
       else if (k === 'import') { closeModal(); $('#importFile').click(); }
-      else if (k === 'home') { closeModal(); ui.screen = 'home'; render(); }
+      else if (k === 'home') { closeModal(); if (NET) netLeave(false); ui.screen = 'home'; render(); }
     });
   }
   function sheetModal(aoId) {
@@ -816,6 +830,12 @@
     return `<div class="hero"><span class="sign"><span class="wordmark">Eldritch Horror</span></span><p>Mazos de Encuentros, Mitos y Misterios · juego básico y expansiones chicas</p></div>
       <main class="main narrow">
         ${cur ? `<h2 class="sec">Continuar</h2><div class="panel save"><div class="info"><b>${esc(cur.name)}</b><div class="muted">${cur.log.length} acciones · ${cur.log[0] ? timeStr(cur.log[0].t) : ''}</div></div><button class="btn primary" data-k="continue">Continuar</button></div>` : ''}
+        <h2 class="sec">Partida compartida</h2>
+        <div class="panel"><div class="row">
+          ${lsGet(LS_NET, null)?.code ? `<button class="btn primary" data-k="rejoin">Volver a ${esc(lsGet(LS_NET, null).code)}</button>` : ''}
+          <input class="input" id="joincode" placeholder="Código, p. ej. DAGON-42" autocapitalize="characters" style="flex:1;min-width:10em;text-transform:uppercase">
+          <button class="btn" data-k="join">Unirse</button></div>
+          <p class="muted" style="margin:6px 0 0;font-size:.9rem">Para crear una: prepará la partida y en el menú ☰ tocá «Compartir partida».</p></div>
         <h2 class="sec">1 · Colección</h2>
         <div class="chips big">${EXPS.map((e) => `<button class="chip ${s.exps.includes(e.id) ? 'on' : ''}" data-exp="${e.id}" ${e.fixed ? 'disabled' : ''}>${e.fixed ? '✓ ' : s.exps.includes(e.id) ? '✓ ' : '+ '}${esc(e.name)}</button>`).join('')}</div>
         <h2 class="sec">2 · Primigenio</h2>
@@ -858,6 +878,8 @@
       else if (k === 'start') startGame(s);
       else if (k === 'continue') { S = lsGet(LS_CUR, null); H = lsGet(LS_HIST, []); ui.screen = 'game'; render(); }
       else if (k === 'import') $('#importFile').click();
+      else if (k === 'join') joinGame($('#joincode').value);
+      else if (k === 'rejoin') joinGame(lsGet(LS_NET, null).code);
       else if (t.dataset.load) { const sv = lsGet(LS_SAVES, [])[+t.dataset.load]; S = sv.data; H = []; ui.screen = 'game'; persist(); render(); }
       else if (t.dataset.del) { const saves = lsGet(LS_SAVES, []); const sv = saves[+t.dataset.del]; confirmModal('¿Borrar partida guardada?', esc(sv.name), () => { saves.splice(+t.dataset.del, 1); lsSet(LS_SAVES, saves); render(); }, 'Borrar'); }
     };
@@ -886,6 +908,245 @@
     else go();
   }
 
+  // ---------- partida compartida (Firebase Realtime Database) ----------
+  // sessions/<CÓDIGO>/game    {ver, json}  estado de la partida (sin el registro), como texto para no perder listas vacías
+  //                  /log     entradas del registro {t, m, who, pid, c?}
+  //                  /hist/<ver>  estado anterior a cada acción (para deshacer; se guardan las últimas 40)
+  //                  /players/<id> {name, inv, on, t}
+  const FB_CFG = {
+    apiKey: 'AIzaSyDjquMvk9zolE1JZ5Mhd-2axl9ZZR-IdSE',
+    authDomain: 'eldritch-mazos.firebaseapp.com',
+    databaseURL: 'https://eldritch-mazos-default-rtdb.firebaseio.com',
+    projectId: 'eldritch-mazos',
+    storageBucket: 'eldritch-mazos.firebasestorage.app',
+    messagingSenderId: '108501323336',
+    appId: '1:108501323336:web:7b5c9205552f07f304127d',
+  };
+  const FB_V = '10.14.1';
+  const LS_ME = 'ehm.me', LS_NET = 'ehm.net';
+  const INVS = window.EH_INVESTIGATORS || [];
+  const BIG_EXP = { mom: 'Las montañas de la locura', utp: 'Bajo las pirámides', dl: 'Las Tierras del Sueño', mon: 'Las máscaras de Nyarlathotep' };
+  const invOf = (id) => INVS.find((i) => i.id === id);
+  const invImg = (id) => `img/inv/${id}.webp`;
+  const CODE_WORDS = ['DAGON', 'HYDRA', 'YUGGOTH', 'ARKHAM', 'INNSMOUTH', 'KADATH', 'CARCOSA', 'KINGSPORT', 'DUNWICH', 'LENG', 'YITH', 'NODENS', 'HASTUR', 'SHOGGOTH', 'AZATHOTH', 'TSATHOGGUA'];
+  const genCode = () => `${CODE_WORDS[Math.floor(Math.random() * CODE_WORDS.length)]}-${10 + Math.floor(Math.random() * 90)}`;
+  function me() {
+    let m = lsGet(LS_ME, null);
+    if (!m?.id) { m = { id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4), name: '' }; lsSet(LS_ME, m); }
+    return m;
+  }
+  function meLabel() {
+    const p = NET?.players?.[me().id]; const inv = invOf(p?.inv || NET?.inv);
+    return inv ? `${me().name} (${inv.n})` : me().name;
+  }
+  // Firebase se carga sólo al compartir o unirse (la partida local no lo necesita)
+  let fbP = null;
+  function fb() {
+    if (!fbP) {
+      fbP = (async () => {
+        const base = `https://www.gstatic.com/firebasejs/${FB_V}/`;
+        const [A, U, D] = await Promise.all(['firebase-app.js', 'firebase-auth.js', 'firebase-database.js'].map((f) => import(base + f)));
+        const app = A.initializeApp(FB_CFG);
+        const auth = U.getAuth(app);
+        await U.signInAnonymously(auth);
+        return { ...D, db: D.getDatabase(app) };
+      })().catch((e) => { fbP = null; throw e; });
+    }
+    return fbP;
+  }
+  const nref = (p) => NET.F.ref(NET.F.db, p ? `sessions/${NET.code}/${p}` : `sessions/${NET.code}`);
+  const stateJSON = (st = S) => JSON.stringify({ ...st, log: [] });
+  let renderQ = false;
+  const renderSoon = () => { if (renderQ) return; renderQ = true; setTimeout(() => { renderQ = false; if (ui.screen === 'game' && S) render(); }, 30); };
+
+  // Acción en una partida compartida: se aplica al instante y se guarda con una transacción;
+  // si otro jugador cambió la partida justo antes, la acción se rehace sobre la versión nueva.
+  function netAct(fn) {
+    const before = stateJSON();
+    NET.out = [];
+    fn();
+    render();
+    const after = stateJSON(), out = NET.out; NET.out = [];
+    if (after === before && !out.length) return;
+    const baseVer = NET.ver, F = NET.F;
+    let prev = before;
+    NET.busy = F.runTransaction(nref('game'), (cur) => {
+      if (cur === null || cur.ver === baseVer) { prev = cur ? cur.json : before; return { ver: baseVer + 1, json: after }; }
+      const keep = S, keepOut = NET.out; let j;
+      S = JSON.parse(cur.json); S.log = [];
+      try { fn(); j = stateJSON(); } finally { S = keep; NET.out = keepOut; }
+      prev = cur.json;
+      return { ver: cur.ver + 1, json: j };
+    }).then((res) => {
+      if (!res.committed) return;
+      const v = res.snapshot.val().ver;
+      const up = { [`hist/${v}`]: prev };
+      if (v > 40) up[`hist/${v - 40}`] = null;
+      for (const e of out) up[`log/${F.push(nref('log')).key}`] = e;
+      return F.update(nref(''), up);
+    }).catch((e) => toast(`No se pudo guardar la acción: ${esc(e.message || e)}`));
+  }
+  async function netUndo(msg) {
+    const F = NET.F;
+    closeModal();
+    await NET.busy;
+    const s = await F.get(F.query(nref('hist'), F.orderByKey(), F.limitToLast(1)));
+    let key = null, json = null; s.forEach((c) => { key = c.key; json = c.val(); });
+    if (!json) { toast('No hay nada para deshacer.'); return; }
+    const last = NET.log.find((e) => !e.undo)?.m;
+    const r = await F.runTransaction(nref('game'), (cur) => (cur === null ? cur : { ver: cur.ver + 1, json }));
+    if (!r.committed) return;
+    await F.update(nref(''), { [`hist/${key}`]: null, [`log/${F.push(nref('log')).key}`]: { t: Date.now(), m: msg || `Deshace: ${last || 'la última acción'}`, who: meLabel(), pid: me().id, undo: 1 } });
+    toast(msg || 'Acción deshecha para todos');
+  }
+  function netNote(m) { if (NET) NET.F.push(nref('log'), { t: Date.now(), m, who: meLabel(), pid: me().id }); }
+
+  // Llegan cambios de Firebase
+  function netGame(v) {
+    if (!NET) return;
+    if (!v) { const c = NET.code; netLeave(); alertModal('La partida compartida ya no existe', `No se encontró ${esc(c)}.`); ui.screen = 'home'; render(); return; }
+    if (v.ver === NET.ver && S && ui.screen === 'game') return;
+    NET.ver = v.ver;
+    S = JSON.parse(v.json); S.log = NET.log; H = [];
+    ui.screen = 'game';
+    renderSoon();
+  }
+  function netLog(snap) {
+    const arr = []; snap.forEach((c) => { arr.push({ k: c.key, ...c.val() }); });
+    arr.reverse();
+    const fresh = NET.seen ? arr.filter((e) => !NET.seen.has(e.k) && e.pid !== me().id) : [];
+    NET.seen = new Set(arr.map((e) => e.k));
+    NET.log = arr; if (S) S.log = arr;
+    renderSoon();
+    // aviso de lo que hizo otro jugador; si robó una carta, se puede abrir desde el aviso
+    const e = fresh.find((x) => x.c != null) || fresh[0];
+    if (e) toast(`<b>${esc(e.who || '?')}</b> ${esc(e.m)}`, e.c != null ? face(e.c) : null, e.c != null ? () => openCard(e.c) : null, 6000);
+  }
+
+  async function connect(code, name, inv) {
+    const F = await fb();
+    if (NET) netLeave(true);
+    NET = { code, F, ver: -1, out: [], players: {}, log: [], seen: null, unsub: [], busy: null, inv };
+    lsSet(LS_NET, { code, active: true });
+    const m = me(); if (name) { m.name = name; lsSet(LS_ME, m); }
+    if (inv) await F.update(nref(`players/${m.id}`), { name: m.name, inv, on: true, t: Date.now() });
+    NET.unsub.push(F.onValue(nref('players'), (s) => { if (NET) { NET.players = s.val() || {}; renderSoon(); } }));
+    NET.unsub.push(F.onValue(F.query(nref('log'), F.orderByKey(), F.limitToLast(300)), (s) => { if (NET) netLog(s); }));
+    NET.unsub.push(F.onValue(nref('game'), (s) => netGame(s.val())));
+    const onRef = nref(`players/${m.id}/on`);
+    NET.unsub.push(F.onValue(F.ref(F.db, '.info/connected'), (s) => { if (s.val() && NET) { F.onDisconnect(onRef).set(false); F.set(onRef, true); } }));
+  }
+  // keepLocal: true = sólo cierra la conexión (p. ej. para reconectar); false = sale de la partida compartida
+  function netLeave(keepLocal) {
+    if (!NET) return;
+    for (const u of NET.unsub) { try { u(); } catch { /* ya cerrado */ } }
+    try { NET.F.set(nref(`players/${me().id}/on`), false); } catch { /* sin conexión */ }
+    const code = NET.code;
+    NET = null;
+    if (!keepLocal) { lsSet(LS_NET, { code, active: false }); S = lsGet(LS_CUR, null); H = lsGet(LS_HIST, []); }
+  }
+
+  async function shareGame() {
+    closeModal();
+    askPlayer({ title: 'Compartir partida', exps: S.exps, players: {} }, async (name, inv) => {
+      try {
+        toast('Creando la partida compartida…');
+        const F = await fb();
+        let code;
+        for (let i = 0; i < 8; i++) { code = genCode(); if (!(await F.get(F.ref(F.db, `sessions/${code}/game`))).exists()) break; }
+        // el registro de la partida local pasa también a la compartida (en orden, con claves cronológicas)
+        const logObj = {};
+        for (const e of [...S.log].reverse().slice(-200)) logObj[F.push(F.ref(F.db, `sessions/${code}/log`)).key] = { t: e.t, m: e.m };
+        await F.set(F.ref(F.db, `sessions/${code}`), { game: { ver: 1, json: stateJSON() }, log: logObj, meta: { created: Date.now(), ao: S.ao } });
+        await connect(code, name, inv);
+        netNote(`comparte la partida (${code}) y juega con ${invOf(inv)?.n || '?'}.`);
+        sessionModal(true);
+      } catch (e) { alertModal('No se pudo compartir la partida', esc(e.message || String(e))); }
+    });
+  }
+  async function joinGame(raw, silent) {
+    const code = String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
+    if (!/^[A-Z]+-[0-9]{2,4}$/.test(code)) { toast('El código tiene la forma PALABRA-12.'); return; }
+    try {
+      if (!silent) toast(`Conectando con ${esc(code)}…`);
+      const F = await fb();
+      const g = await F.get(F.ref(F.db, `sessions/${code}/game`));
+      if (!g.exists()) { lsSet(LS_NET, null); if (!silent) alertModal('No existe esa partida', `No se encontró ninguna partida con el código <b>${esc(code)}</b>.`); render(); return; }
+      const players = (await F.get(F.ref(F.db, `sessions/${code}/players`))).val() || {};
+      const mine = players[me().id];
+      if (mine?.inv && mine?.name) { await connect(code); toast(`Conectado a <b>${esc(code)}</b> como ${esc(mine.name)}`); return; }
+      const st = JSON.parse(g.val().json);
+      askPlayer({ title: `Unirse a ${code}`, exps: st.exps, players }, async (name, inv) => {
+        await connect(code, name, inv);
+        netNote(`se une a la partida con ${invOf(inv)?.n || '?'}.`);
+      });
+    } catch (e) { if (!silent) alertModal('No se pudo conectar', esc(e.message || String(e))); }
+  }
+
+  // Elegir nombre e investigador (los de la colección primero; los que ya usa otro jugador conectado, bloqueados)
+  function askPlayer(opt, cb) {
+    let sel = opt.current || null;
+    const taken = {};
+    for (const [pid, p] of Object.entries(opt.players || {})) if (pid !== me().id && p?.inv && p?.on) taken[p.inv] = p.name;
+    const own = INVS.filter((i) => opt.exps.includes(i.x)), other = INVS.filter((i) => !opt.exps.includes(i.x));
+    const card = (i) => `<button class="inv ${sel === i.id ? 'on' : ''}" data-inv="${i.id}" ${taken[i.id] ? 'disabled' : ''}>
+        <img src="${invImg(i.id)}" alt="" loading="lazy"><b>${esc(i.n)}</b><small>${taken[i.id] ? `lo juega ${esc(taken[i.id])}` : esc(EXP_NAME[i.x] || BIG_EXP[i.x] || '')}</small></button>`;
+    const html = () => `<div class="mbox wide"><div class="mhead"><h3>${esc(opt.title)}</h3><button class="iconbtn" data-x>✕</button></div>
+      <div class="row"><label for="pname" class="muted">Tu nombre</label><input class="input" id="pname" maxlength="20" value="${esc($('#pname')?.value ?? me().name)}" placeholder="p. ej. Sofía" style="flex:1"></div>
+      <h2 class="sec">Tu investigador</h2><div class="invgrid">${own.map(card).join('')}</div>
+      ${other.length ? `<details class="panel" style="margin-top:10px" ${other.some((i) => i.id === sel) ? 'open' : ''}><summary>Investigadores de otras expansiones (${other.length})</summary><div class="invgrid" style="margin-top:8px">${other.map(card).join('')}</div></details>` : ''}
+      <div class="actions"><button class="btn primary full" data-ok ${sel ? '' : 'disabled'}>${sel ? `Jugar con ${esc(invOf(sel).n)}` : 'Elegí un investigador'}</button></div></div>`;
+    openModal(html(), (e) => {
+      const b = e.target.closest('[data-inv]');
+      if (b) { sel = b.dataset.inv; const nm = $('#pname').value; $('#modal').innerHTML = html(); $('#pname').value = nm; return; }
+      if (e.target.closest('[data-ok]')) {
+        const name = $('#pname').value.trim();
+        if (!name) { toast('Escribí tu nombre.'); $('#pname').focus(); return; }
+        if (!sel) return;
+        closeModal(); cb(name, sel);
+      }
+    });
+  }
+
+  function sessionChipHTML() {
+    const ps = Object.entries(NET.players || {}).filter(([, p]) => p?.name && p?.inv).sort((a, b) => (a[1].t || 0) - (b[1].t || 0));
+    return `<button class="sess" data-a="session" title="Partida compartida">
+      <span class="code">${esc(NET.code)}</span>
+      <span class="avs">${ps.map(([pid, p]) => `<img class="${p.on ? 'on' : 'off'} ${pid === me().id ? 'me' : ''}" src="${invImg(p.inv)}" alt="" title="${esc(p.name)} (${esc(invOf(p.inv)?.n || '')})">`).join('')}</span></button>`;
+  }
+  function sessionModal(fresh) {
+    if (!NET) return;
+    const link = `${location.origin}${location.pathname}?s=${NET.code}`;
+    const ps = Object.entries(NET.players || {}).filter(([, p]) => p?.name).sort((a, b) => (a[1].t || 0) - (b[1].t || 0));
+    openModal(`<div class="mbox"><div class="mhead"><h3>Partida compartida</h3><button class="iconbtn" data-x>✕</button></div>
+      ${fresh ? '<div class="note">¡Listo! Pasales el código o el link a los demás: cada uno entra desde su dispositivo y elige su investigador.</div>' : ''}
+      <div class="panel sesscode"><div class="muted">Código</div><b>${esc(NET.code)}</b>
+        <div class="row" style="justify-content:center"><button class="btn" data-k="copy">Copiar link</button>${navigator.share ? '<button class="btn" data-k="sharelink">Enviar…</button>' : ''}</div>
+        <div class="muted" style="font-size:.8rem;word-break:break-all">${esc(link)}</div></div>
+      <h2 class="sec">Jugadores</h2>
+      <div class="plist">${ps.map(([pid, p]) => `<div class="pl ${p.on ? '' : 'off'}"><img src="${invImg(p.inv)}" alt=""><div><b>${esc(p.name)}${pid === me().id ? ' (vos)' : ''}</b><small>${esc(invOf(p.inv)?.n || '—')} · ${p.on ? 'conectado' : 'desconectado'}</small></div></div>`).join('') || '<p class="muted">Nadie todavía.</p>'}</div>
+      <div class="menu" style="margin-top:12px">
+        <button class="btn" data-k="inv">Cambiar mi investigador (si murió)…</button>
+        <button class="btn danger" data-k="leave">Salir de la partida compartida</button>
+      </div></div>`, async (e) => {
+      const b = e.target.closest('[data-k]'); if (!b) return;
+      const k = b.dataset.k;
+      if (k === 'copy') { try { await navigator.clipboard.writeText(link); toast('Link copiado'); } catch { toast('No se pudo copiar: ' + esc(link)); } }
+      else if (k === 'sharelink') { try { await navigator.share({ title: 'Eldritch Horror', text: `Partida ${NET.code}`, url: link }); } catch { /* cancelado */ } }
+      else if (k === 'inv') {
+        const mineP = NET.players[me().id] || {};
+        askPlayer({ title: 'Cambiar de investigador', exps: S.exps, players: NET.players, current: null }, async (name, inv) => {
+          const old = invOf(mineP.inv)?.n;
+          await NET.F.update(nref(`players/${me().id}`), { name, inv, on: true }); NET.inv = inv;
+          const m = me(); m.name = name; lsSet(LS_ME, m);
+          netNote(`${old ? `deja a ${old} (derrotado) y ` : ''}ahora juega con ${invOf(inv)?.n}.`);
+        });
+      } else if (k === 'leave') {
+        confirmModal('¿Salir de la partida compartida?', 'La partida sigue en la nube para los demás; podés volver a entrar con el código.', () => { netLeave(false); lsSet(LS_NET, null); ui.screen = 'home'; render(); }, 'Salir');
+      }
+    });
+  }
+
   // ---------- modal / toast ----------
   let modalHandler = null, modalDismiss = null;
   function openModal(html, handler, onDismiss) {
@@ -912,16 +1173,22 @@
   }
   function viewImage(src, title) { openModal(`<div class="mbox"><div class="mhead"><h3>${esc(title)}</h3><button class="iconbtn" data-x>✕</button></div><img src="${src}" style="width:min(100%,420px);margin:auto;border-radius:10px" alt=""></div>`); }
   let toastT = null;
-  function toast(html, img) {
-    const t = $('#toast'); t.innerHTML = `${img ? `<img src="${img}" alt="">` : ''}<span>${html}</span>`; t.hidden = false;
-    clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3200);
+  // onTap: si se pasa, el aviso se puede tocar (p. ej. «Ver carta» en una partida compartida)
+  function toast(html, img, onTap, ms = 3200) {
+    const t = $('#toast'); t.innerHTML = `${img ? `<img src="${img}" alt="">` : ''}<span>${html}</span>${onTap ? '<button class="chip">Ver</button>' : ''}`; t.hidden = false;
+    t.onclick = onTap ? () => { t.hidden = true; onTap(); } : null;
+    clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, ms);
   }
 
-  // arranque
+  // arranque: ?s=CODIGO se une a una partida compartida; si había una sesión abierta en este dispositivo, se reconecta
   const cur = lsGet(LS_CUR, null);
   if (cur) { S = cur; H = lsGet(LS_HIST, []); ui.screen = 'game'; }
   applyLayout();
   applyZoom();
   applySize();
-  render();
+  const qs = new URLSearchParams(location.search).get('s');
+  const lastNet = lsGet(LS_NET, null);
+  if (qs) { history.replaceState(null, '', location.pathname); ui.screen = 'home'; render(); joinGame(qs); }
+  else if (lastNet?.code && lastNet.active) { ui.screen = 'home'; render(); joinGame(lastNet.code, true); }
+  else render();
 })();
