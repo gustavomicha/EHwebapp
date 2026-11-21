@@ -213,6 +213,7 @@
       decks: {}, order: [], pending: [], log: [], dev: [], advs: [],
       myth: { cards: [], disc: [], play: [] }, mst: {}, myst: { cards: [], active: null, solved: [] }, tok: {},
       prelude: null, cfg: { preset: cfg.preset, pct: cfgPct(cfg), order: cfg.order },
+      invs: (cfg.invs || []).map((id) => ({ id, st: 'on' })),
     };
     H = [];
     // Preludio
@@ -348,13 +349,14 @@
         <button class="iconbtn" data-a="menu" title="Menú">${ICON.menu}</button>
       </header>
       <nav class="tabs">
-        ${[['world', 'Encuentros'], ['mythos', 'Mitos y Misterio'], ['log', 'Registro']].map(([k, l]) => `<button class="tab ${ui.tab === k ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}
+        ${[['world', 'Encuentros'], ['mythos', 'Mitos y Misterio'], ['invs', 'Investigadores'], ['log', 'Registro']].map(([k, l]) => `<button class="tab ${ui.tab === k ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}
       </nav></div>
       <main class="main">
         <div class="cols">
           <section class="pane ${ui.tab === 'world' ? 'on' : ''}">${worldHTML()}</section>
           <section>
             <div class="pane ${ui.tab === 'mythos' ? 'on' : ''}">${mythosHTML()}</div>
+            <div class="pane ${ui.tab === 'invs' ? 'on' : ''}">${invsHTML()}</div>
             <div class="pane ${ui.tab === 'log' ? 'on' : ''}">${logHTML()}</div>
           </section>
         </div>
@@ -414,7 +416,7 @@
       <div class="mystery">
         ${act0 != null ? `<div class="mcard" data-open="${act0}" style="aspect-ratio:${ratio(act0)}"><img src="${face(act0)}" alt=""><div class="tks">${tokBadges(act0)}</div></div>` : `<div class="panel muted">No hay Misterio activo${S.myst.solved.length >= 3 ? ': ¡ya se resolvieron 3!' : '.'}</div>`}
         <div class="row"><span class="pill">Resueltos: <b>${S.myst.solved.length}</b> / 3</span><span class="muted">${S.myst.cards.length} en el mazo</span><span class="spacer"></span>
-          ${act0 != null ? `<button class="btn gold" data-a="solve">Misterio resuelto</button>` : S.myst.cards.length ? `<button class="btn" data-a="nextmyst">Robar Misterio</button>` : ''}</div>
+          ${act0 != null ? `<button class="btn" data-a="chmyst">Cambiar…</button><button class="btn gold" data-a="solve">Misterio resuelto</button>` : S.myst.cards.length ? `<button class="btn" data-a="nextmyst">Robar Misterio</button>` : ''}</div>
         ${S.myst.solved.length ? `<div class="chips">${S.myst.solved.map((id) => `<button class="chip" data-open="${id}">✓ ${esc(CARDS[id].n || 'Misterio')}</button>`).join('')}</div>` : ''}
       </div>
       <h2 class="sec">Mazo de Mitos</h2>
@@ -441,10 +443,11 @@
 
   function bindGame() {
     $('#app').onclick = (e) => {
-      const t = e.target.closest('[data-a],[data-tab],[data-draw],[data-dmenu],[data-m],[data-open],[data-peek],[data-sz]');
+      const t = e.target.closest('[data-a],[data-tab],[data-draw],[data-dmenu],[data-m],[data-open],[data-peek],[data-sz],[data-inv]');
       if (!t) return;
       e.stopPropagation();
       if (t.dataset.tab) { ui.tab = t.dataset.tab; render(); return; }
+      if (t.dataset.inv) { invModal(t.dataset.inv); return; }
       if (t.dataset.sz) { lsSet(LS_SIZE, sizeIdx() + +t.dataset.sz); applySize(); render(); return; }
       if (t.dataset.dmenu) { deckMenu(t.dataset.dmenu); return; }
       if (t.dataset.open) { openCard(+t.dataset.open); return; }
@@ -467,6 +470,8 @@
       else if (a === 'nextmyst') act(() => { S.myst.active = S.myst.cards.shift(); log(`Nuevo Misterio: ${CARDS[S.myst.active].n || '¿?'}.`); });
       else if (a === 'mdisc') browseList([...S.myth.disc].reverse(), 'Descarte de Mitos', 'La primera es la última descartada.');
       else if (a === 'devmenu') devastationModal();
+      else if (a === 'chmyst') changeMystery();
+      else if (a === 'addinv') addInvestigator();
     };
   }
 
@@ -573,7 +578,7 @@
     } else if (w.zone === 'mplay') {
       actions = `<button class="btn primary" data-mv="MY" data-pos="disc">Descartar<small>${c.ty === 'rumor' ? 'Rumor resuelto o terminado' : 'ya no está en juego'}</small></button><button class="btn" data-x>Cerrar</button>`;
     } else if (w.zone === 'myst') {
-      actions = `<button class="btn gold" data-do="solve">Misterio resuelto</button><button class="btn" data-x>Cerrar</button>`;
+      actions = `<button class="btn gold" data-do="solve">Misterio resuelto</button><button class="btn" data-do="chmyst">Cambiar Misterio…</button>`;
     } else if (w.zone === 'adv') {
       actions = `<button class="btn primary" data-do="advdone">Completada<small>sale del juego</small></button><button class="btn" data-x>Cerrar</button>`;
     } else {
@@ -638,6 +643,7 @@
       const d = e.target.closest('[data-do]'); if (!d) return;
       const k = d.dataset.do;
       if (k === 'solve') { closeModal(); solveMystery(); return; }
+      if (k === 'chmyst') { changeMystery(); return; }
       closeModal();
       act(() => {
         if (k === 'advplay') { removeEverywhere(id); S.advs.push(id); log(`Aventura en juego: ${CARDS[id].n || ''}.`); }
@@ -747,8 +753,8 @@
     if (S.prelude != null) h += `<div class="note"><b>Preludio: ${esc(CARDS[S.prelude].n || '')}.</b> Resuélvelo ${fresh ? 'ahora' : 'al preparar'} (salvo que indique otro momento).</div><div class="pair one"><img src="${face(S.prelude)}" alt=""></div>`;
     const m = S.myst.active ?? S.myst.solved[0];
     if (m != null) h += `<div class="note"><b>Primer Misterio: ${esc(CARDS[m].n || '')}.</b> Resuelve su efecto «Cuando esta carta entra en juego».</div><div class="pair one land"><img src="${face(m)}" alt=""></div>`;
-    h += `<div class="actions"><button class="btn" data-k="sheet">Ver hoja de Primigenio</button><button class="btn primary" data-x>${fresh ? 'Empezar' : 'Cerrar'}</button></div></div>`;
-    openModal(h, (e) => { if (e.target.closest('[data-k=sheet]')) sheetModal(); });
+    h += `<div class="actions"><button class="btn" data-k="sheet">Ver hoja de Primigenio</button>${S.myst.active != null ? '<button class="btn" data-k="chmyst">Cambiar el Misterio…</button>' : ''}<button class="btn primary full" data-x>${fresh ? 'Empezar' : 'Cerrar'}</button></div></div>`;
+    openModal(h, (e) => { if (e.target.closest('[data-k=sheet]')) sheetModal(); else if (e.target.closest('[data-k=chmyst]')) changeMystery(); });
   }
 
   // ---------- inglés ----------
@@ -792,7 +798,7 @@
   };
 
   // ---------- inicio y preparación ----------
-  const defaultSetup = () => ({ exps: ['base'], ao: 'azathoth', prelude: 'none', preset: 'natural', pct: { E: 25, N: 45, H: 30 }, order: 'random' });
+  const defaultSetup = () => ({ exps: ['base'], ao: 'azathoth', prelude: 'none', preset: 'natural', pct: { E: 25, N: 45, H: 30 }, order: 'random', invs: [] });
   function getSetup() {
     const s = { ...defaultSetup(), ...lsGet(LS_SETUP, {}) };
     s.exps = ['base', ...s.exps.filter((e) => e !== 'base' && EXP_NAME[e])];
@@ -836,6 +842,10 @@
           ${planTable(A, plan)}
           <div class="chips"><span class="muted" style="align-self:center">Orden:</span>${[['random', 'Al azar entre etapas'], ['prog', 'Progresivo (fáciles primero)']].map(([k, l]) => `<button class="chip ${s.order === k ? 'on' : ''}" data-order="${k}">${l}</button>`).join('')}</div>
         </div>
+        <h2 class="sec">${pre.length ? 5 : 4} · Investigadores <span class="muted" style="font-size:.85rem;font-family:var(--body)">(opcional)</span></h2>
+        <div class="panel"><div class="invrow">${(s.invs || []).map((id) => invOf(id) ? `<img src="${invImg(id)}" alt="" title="${esc(invOf(id).n)}">` : '').join('')}
+          <button class="btn" data-k="pickinvs">${(s.invs || []).length ? 'Cambiar…' : 'Elegir quiénes juegan…'}</button></div>
+          ${(s.invs || []).length ? `<div class="muted" style="font-size:.9rem;margin-top:6px">${s.invs.map((id) => esc(invOf(id)?.n || '')).join(' · ')}</div>` : ''}</div>
         <div class="row" style="margin-top:14px"><span class="spacer"></span><button class="btn primary big" data-k="start">Preparar partida</button></div>
         <h2 class="sec">Partidas guardadas</h2>
         <div class="saves">${saves.length ? saves.map((sv, i) => `<div class="panel save"><div class="info"><b>${esc(sv.name)}</b><div class="muted">${sv.data.log.length} acciones</div></div><button class="btn" data-load="${i}">Cargar</button><button class="btn" data-del="${i}">✕</button></div>`).join('') : '<p class="muted">Todavía no hay partidas guardadas con nombre.</p>'}
@@ -855,6 +865,7 @@
       const k = t.dataset.k;
       if (k === 'aosheet') sheetModal(s.ao);
       else if (k === 'pickpre') pickPrelude(s);
+      else if (k === 'pickinvs') pickInvs(s.exps, s.invs || [], (ids) => { s.invs = ids; setSetup(s); render(); });
       else if (k === 'start') startGame(s);
       else if (k === 'continue') { S = lsGet(LS_CUR, null); H = lsGet(LS_HIST, []); ui.screen = 'game'; render(); }
       else if (k === 'import') $('#importFile').click();
@@ -884,6 +895,111 @@
     const go = () => newGame(s);
     if (lsGet(LS_CUR, null)) confirmModal('¿Empezar una partida nueva?', 'Reemplaza la partida en curso (guárdala antes con nombre si la quieres conservar).', go, 'Empezar');
     else go();
+  }
+
+  // ---------- investigadores en juego ----------
+  // S.invs = [{ id, st }]: st 'on' en juego, 'out' derrotado (su hoja sigue a mano para los encuentros de investigador derrotado)
+  const invList = () => S.invs || (S.invs = []);
+  function ensureInv(id, oldId) {
+    if (oldId && oldId !== id) { const o = invList().find((x) => x.id === oldId); if (o) o.st = 'out'; }
+    const x = invList().find((i) => i.id === id);
+    if (x) x.st = 'on'; else invList().push({ id, st: 'on' });
+  }
+  const INVS = window.EH_INVESTIGATORS || [];
+  const BIG_EXP = { mom: 'Las montañas de la locura', utp: 'Bajo las pirámides', dl: 'Las Tierras del Sueño', mon: 'Las máscaras de Nyarlathotep' };
+  const invOf = (id) => INVS.find((i) => i.id === id);
+  const invImg = (id) => `img/inv/${id}.webp`;
+  const playerOf = () => null;
+  function invsHTML() {
+    const L = invList();
+    const card = (x) => { const i = invOf(x.id); if (!i) return ''; const who = playerOf(x.id);
+      return `<button class="invcard ${x.st}" data-inv="${x.id}"><img src="${invImg(x.id)}" alt=""><b>${esc(i.n)}</b><small>${x.st === 'out' ? 'derrotado' : who ? esc(who) : 'en juego'}</small></button>`; };
+    const on = L.filter((x) => x.st === 'on'), out = L.filter((x) => x.st === 'out');
+    return `<h2 class="sec">Investigadores</h2>
+      ${on.length ? `<div class="invcards">${on.map(card).join('')}</div>` : '<p class="muted">Todavía no hay investigadores elegidos.</p>'}
+      <div class="chips"><button class="chip" data-a="addinv">+ Agregar investigador</button></div>
+      ${out.length ? `<h2 class="sec">Derrotados</h2><p class="muted" style="margin-top:0">Su hoja queda a mano: el reverso tiene los encuentros de investigador derrotado.</p><div class="invcards">${out.map(card).join('')}</div>` : ''}
+      <p class="muted" style="font-size:.9rem">Toca un investigador para leer su hoja (el reverso tiene la historia y qué pasa si muere o enloquece).</p>`;
+  }
+  function invModal(id, side = 'b') {
+    const i = invOf(id), x = invList().find((v) => v.id === id); if (!i) return;
+    openModal(`<div class="mbox wide"><div class="mhead"><div style="flex:1"><h3>${esc(i.n)}</h3><div class="sub">${x?.st === 'out' ? 'Derrotado' : x ? 'En juego' : ''}${playerOf(id) ? ` · lo juega ${esc(playerOf(id))}` : ''}</div></div><button class="iconbtn" data-x>✕</button></div>
+      <div class="chips" style="margin:0 0 10px"><button class="chip ${side === 'b' ? 'on' : ''}" data-side="b">Reverso: historia y derrota</button><button class="chip ${side === 'a' ? 'on' : ''}" data-side="a">Anverso: habilidades</button></div>
+      <div class="viewer"><div class="flip land sheetv" id="flipper" style="aspect-ratio:1000/801"><div class="face a"><img src="img/inv/${id}${side}.webp" alt="" draggable="false"></div></div></div>
+      <div class="fliphint"><button class="chip" data-zoom>${isZoom() ? '− Achicar' : '🔍 Ampliar'}</button> · toca la hoja para ${isZoom() ? 'achicar' : 'ampliar'}</div>
+      ${x ? `<div class="actions">
+        ${x.st === 'on' ? '<button class="btn danger" data-k="out">Derrotado</button><button class="btn" data-k="replace">Reemplazar por otro…</button>' : '<button class="btn" data-k="back">Vuelve al juego</button><button class="btn" data-k="remove">Quitar de la lista</button>'}
+      </div>` : ''}</div>`, (e) => {
+      const sb = e.target.closest('[data-side]'); if (sb) { invModal(id, sb.dataset.side); return; }
+      if (e.target.closest('[data-zoom]') || e.target.closest('#flipper')) { toggleZoom(); return; }
+      const b = e.target.closest('[data-k]'); if (!b) return;
+      const k = b.dataset.k;
+      if (k === 'replace') { replaceInvestigator(id); return; }
+      closeModal();
+      act(() => {
+        const v = invList().find((q) => q.id === id); if (!v) return;
+        if (k === 'out') { v.st = 'out'; log(`${i.n} queda derrotado.`); }
+        else if (k === 'back') { v.st = 'on'; log(`${i.n} vuelve al juego.`); }
+        else if (k === 'remove') { S.invs = invList().filter((q) => q.id !== id); log(`${i.n} sale de la lista de investigadores.`); }
+      });
+    });
+  }
+  // Selector de investigadores: varios (preparación) o uno (agregar / reemplazar)
+  function pickInvs(exps, chosen, cb, opt = {}) {
+    let sel = [...chosen];
+    const used = new Set(opt.exclude || []);
+    const own = INVS.filter((i) => exps.includes(i.x)), other = INVS.filter((i) => !exps.includes(i.x));
+    const card = (i) => `<button class="inv ${sel.includes(i.id) ? 'on' : ''}" data-pick="${i.id}" ${used.has(i.id) ? 'disabled' : ''}>
+        <img src="${invImg(i.id)}" alt="" loading="lazy"><b>${esc(i.n)}</b><small>${used.has(i.id) ? 'ya está' : esc(EXP_NAME[i.x] || BIG_EXP[i.x] || '')}</small></button>`;
+    const html = () => `<div class="mbox wide"><div class="mhead"><div style="flex:1"><h3>${esc(opt.title || 'Investigadores')}</h3><div class="sub">${opt.single ? 'Elegí uno.' : 'Tocá para marcar o desmarcar.'}</div></div><button class="iconbtn" data-x>✕</button></div>
+      <div class="invgrid">${own.map(card).join('')}</div>
+      ${other.length ? `<details class="panel" style="margin-top:10px" ${other.some((i) => sel.includes(i.id)) ? 'open' : ''}><summary>Otras expansiones (${other.length})</summary><div class="invgrid" style="margin-top:8px">${other.map(card).join('')}</div></details>` : ''}
+      <div class="actions"><button class="btn primary full" data-ok ${opt.single && !sel.length ? 'disabled' : ''}>${opt.single ? (sel.length ? `Elegir a ${esc(invOf(sel[0]).n)}` : 'Elegí un investigador') : `Listo (${sel.length})`}</button></div></div>`;
+    openModal(html(), (e) => {
+      const b = e.target.closest('[data-pick]');
+      if (b) {
+        const id = b.dataset.pick;
+        if (opt.single) sel = [id]; else sel = sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id];
+        const op = $('#modal details')?.open; const sc = $('#modal').scrollTop; $('#modal').innerHTML = html();
+        if (op && $('#modal details')) $('#modal details').open = true; $('#modal').scrollTop = sc; return;
+      }
+      if (e.target.closest('[data-ok]')) { closeModal(); cb(sel); }
+    });
+  }
+  function addInvestigator() {
+    pickInvs(S.exps, [], (ids) => { if (!ids.length) return; act(() => { ensureInv(ids[0]); log(`${invOf(ids[0]).n} se suma a la partida.`); }); },
+      { single: true, title: 'Agregar investigador', exclude: invList().map((x) => x.id) });
+  }
+  function replaceInvestigator(oldId) {
+    pickInvs(S.exps, [], (ids) => {
+      if (!ids.length) return;
+      const nu = ids[0];
+      act(() => { ensureInv(nu, oldId); log(`${invOf(oldId).n} queda derrotado; lo reemplaza ${invOf(nu).n}.`); });
+    }, { single: true, title: `Reemplazar a ${invOf(oldId).n}`, exclude: invList().map((x) => x.id) });
+  }
+
+  // ---------- cambiar el Misterio activo ----------
+  // Para jugar el mismo Misterio que en la mesa: otro al azar, o uno elegido de los que quedan en el mazo.
+  function changeMystery() {
+    const cur = S.myst.active; if (cur == null) return;
+    const left = S.myst.cards;
+    if (!left.length) { alertModal('No hay otros Misterios', 'El mazo de Misterios está vacío.'); return; }
+    openModal(`<div class="mbox wide"><div class="mhead"><div style="flex:1"><h3>Cambiar el Misterio activo</h3><div class="sub">Ahora: ${esc(CARDS[cur].n || '')}. El actual vuelve al mazo de Misterios, que se baraja.</div></div><button class="iconbtn" data-x>✕</button></div>
+      <div class="actions" style="margin-top:0"><button class="btn primary full" data-rnd>Otro al azar</button></div>
+      <h2 class="sec">O elegí uno (${left.length} en el mazo)</h2>
+      <div class="thumbs land">${left.map((id) => `<div class="t" data-pick="${id}"><img src="${face(id)}" loading="lazy" alt=""><span>${esc(CARDS[id].n || '')}</span></div>`).join('')}</div></div>`,
+      (e) => {
+        const r = e.target.closest('[data-rnd]'), t = e.target.closest('[data-pick]');
+        if (!r && !t) return;
+        const pick = t ? +t.dataset.pick : left[Math.floor(Math.random() * left.length)];
+        closeModal();
+        act(() => {
+          S.myst.cards = shuffle([...S.myst.cards.filter((x) => x !== pick), cur]);
+          S.myst.active = pick; delete toks()[cur];
+          log(`Cambio de Misterio: ${CARDS[cur].n || '¿?'} vuelve al mazo; nuevo Misterio activo: ${CARDS[pick].n || '¿?'}${t ? ' (elegido)' : ' (al azar)'}.`, pick);
+        });
+        openCard(pick, { info: 'Nuevo Misterio activo: resuelve su efecto «Cuando esta carta entra en juego».', readonly: true });
+      });
   }
 
   // ---------- modal / toast ----------
