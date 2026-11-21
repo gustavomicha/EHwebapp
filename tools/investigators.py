@@ -41,6 +41,12 @@ def main():
         ph = im.crop((round(W * .085), round(H * .085), round(W * .44), round(H * .50))).resize((240, 270), Image.LANCZOS)
         iid = re.sub(r'[^a-z]+', '-', key(bag['Nickname'])).strip('-')
         ph.save(os.path.join(APP, 'img', 'inv', f'{iid}.webp'), 'WEBP', quality=80, method=5)
+        # hoja completa: anverso (a) y reverso (b: historia y encuentros de investigador derrotado)
+        for side, url in (('a', tile['CustomImage']['ImageURL']), ('b', tile['CustomImage'].get('ImageSecondaryURL'))):
+            if not url: continue
+            sh = Image.open(get(url)).convert('RGB')
+            if sh.size[0] > 1000: sh = sh.resize((1000, round(sh.size[1] * 1000 / sh.size[0])), Image.LANCZOS)
+            sh.save(os.path.join(APP, 'img', 'inv', f'{iid}{side}.webp'), 'WEBP', quality=80, method=5)
         x = prod.get(key(bag['Nickname']))
         if not x: print('sin expansión:', bag['Nickname'])
         out.append({'id': iid, 'n': name, 'x': x or 'otro'})
