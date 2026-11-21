@@ -8,3 +8,4 @@ tools/work/*.npz
 tools/work/*.png
 tools/work/*.log
 tools/work_*.py
+tools/work/review/

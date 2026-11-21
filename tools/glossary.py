@@ -26,6 +26,14 @@ TERMS = {
     'Apoyo único': 'Unique Asset', 'Artefacto': 'Artifact', 'Retrasado': 'Delayed', 'investigador jefe': 'Lead Investigator',
     'Investigador derrotado': 'Defeated Investigator', 'Devastación': 'Devastation', 'Desastre': 'Disaster',
     'Resistencia física': 'Physical Resistance', 'Encuentro de Combate': 'Combat Encounter',
+    # tipos de carta sueltos («obtén 1 Hechizo»): dicen de qué mazo en inglés robar
+    'Hechizos': 'Spells', 'Hechizo': 'Spell', 'Estados': 'Conditions', 'Estado': 'Condition',
+    'Apoyos': 'Assets', 'Apoyo': 'Asset', 'Artefactos': 'Artifacts',
+    # en las cartas los billetes van en minúscula
+    'billete de barco': 'Ship Ticket', 'billete de tren': 'Train Ticket', 'billetes de barco': 'Ship Tickets',
+    'billetes de tren': 'Train Tickets', 'billete de viaje': 'Travel Ticket', 'billetes de viaje': 'Travel Tickets',
+    'medidor de Augurio': 'Omen track', 'medidor de Perdición': 'Doom track',
+    'fichas de Arcano': 'Eldritch tokens', 'fichas de Mejora': 'Improvement tokens', 'Monstruos épicos': 'Epic Monsters',
 }
 
 # Pulido de títulos leídos por OCR (Mitos, Misterios, Aventuras, Desastres, ubicaciones):
@@ -99,7 +107,45 @@ MYTHOS_TOKENS = {
 }
 
 # Correcciones manuales del diccionario de nombres (español -> inglés)
-NAMES_FIX = {}
+# Nombres que no salen del emparejamiento por ilustración (cartas dobles o sin par en el mod en inglés)
+NAMES_FIX = {
+    'Asenath Waite': 'Asenath Waite', 'Etienne Laurent': 'Etienne Laurent', 'Hildred Castaigne': 'Hildred Castaigne',
+    'Necronomicón': 'Necronomicon', 'Llave de plata': 'The Silver Key', 'Massa di Requiem per Shuggay': 'Massa di Requiem per Shuggay',
+    'De Vermis Mysteriis': 'De Vermis Mysteriis', 'El Rey Amarillo': 'The King in Yellow',
+    # mismos nombres en los dos idiomas: el cartel dice igual de qué mazo es
+    "T'tka Halot": "T'tka Halot",
+    'Mauser C96': 'Mauser C96',
+    'Opus Arcana': 'Opus Arcana',
+    'Sir William Brinton': 'Sir William Brinton',
+    'William Dyer': 'William Dyer',
+    'Anna Tilton': 'Anna Tilton',
+    'Albert Wilmarth': 'Albert Wilmarth',
+    'Corinna Jones': 'Corinna Jones',
+    'Constance Hawberk': 'Constance Hawberk',
+    "Kid O'Brien": "Kid O'Brien",
+    'Randolph Carter': 'Randolph Carter',
+    'Esteban Herrero': 'Esteban Herrero',
+    'Danforth': 'Danforth',
+    'Henry Wilcox': 'Henry Wilcox',
+}
+NAMES_FIX_CAT = {'Asenath Waite': 'Unique Asset', 'Etienne Laurent': 'Unique Asset', 'Hildred Castaigne': 'Unique Asset',
+                 'Necronomicón': 'Artifact', 'Llave de plata': 'Artifact', 'Massa di Requiem per Shuggay': 'Artifact',
+                 'De Vermis Mysteriis': 'Artifact', 'El Rey Amarillo': 'Artifact',
+                 "T'tka Halot": 'Artifact',
+                 'Mauser C96': 'Asset',
+                 'Opus Arcana': 'Asset',
+                 'Sir William Brinton': 'Unique Asset',
+                 'William Dyer': 'Unique Asset',
+                 'Anna Tilton': 'Unique Asset',
+                 'Albert Wilmarth': 'Unique Asset',
+                 'Corinna Jones': 'Unique Asset',
+                 'Constance Hawberk': 'Unique Asset',
+                 "Kid O'Brien": 'Unique Asset',
+                 'Randolph Carter': 'Unique Asset',
+                 'Esteban Herrero': 'Unique Asset',
+                 'Danforth': 'Unique Asset',
+                 'Henry Wilcox': 'Unique Asset',
+                 }
 
 PRELUDE_FX = {
     'alineamiento cosmico': {'ruins': True, 'adventures': True,

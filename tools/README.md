@@ -14,8 +14,14 @@ No hacen falta para usar la app. Se corren desde esta carpeta con el entorno de 
 5. `difficulty.py` — dificultad de las cartas de Mitos (tentáculos = Difícil, estrella = Fácil) → `work/difficulty.json`.
    Se valida contra el mod en inglés, que ya trae los mazos separados por dificultad (214/217 aciertos; el resto se revisó a mano).
 6. `ocr.py N 4` — OCR de las cartas en español en 4 procesos (`work/ocr_*.json`).
+6b. `ocrbox.py N 4` — el mismo OCR pero con la posición de cada letra (`work/ocrbox_*.json`), para dibujar en la app
+   los recuadros de las palabras traducidas. Tarda alrededor de una hora con 4 procesos.
 7. `pair.py` — empareja las cartas chicas en español con las del mod en inglés por la ilustración → `work/pairs.json`.
 8. `build_data.py` — genera `data.js` e `img/` (caras, dorsos agrupados y hojas de Primigenio).
-   Usa `glossary.py` (rasgos, términos, efectos de Preludios, correcciones) y `hints.py` (detección de nombres y rasgos en el texto).
+   Usa `glossary.py` (rasgos, términos, efectos de Preludios, correcciones) y `hints.py` (detección de nombres y rasgos en el texto
+   y de su posición: cada carta lleva `en` = lo que se traduce y `hl` = sus recuadros).
+9. `rehint.py` — recalcula sólo `en` y `hl` en `data.js` (unos segundos), para ajustar `hints.py` o `glossary.py` sin regenerar imágenes.
+10. `review_hl.py` — planillas `work/review/hl_NNN.png` con un recorte de cada recuadro y su texto en inglés, para revisarlos a ojo.
+   Se revisaron todas (2219 recuadros en 684 cartas). En la app, `index.html#revisar` muestra las mismas cartas en el visor.
 
 `work/` guarda los datos intermedios; las hojas, recortes y firmas no se versionan (se regeneran con los pasos 2 y 3).

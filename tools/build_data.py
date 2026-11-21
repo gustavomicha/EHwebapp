@@ -79,12 +79,12 @@ def squash(s): return re.sub(r'[^a-z0-9]', '', fold(s))
 PRELUDE_RULES = re.compile(r'^(antes|durante|despues|tras|al final)')
 
 
-def rules_text(c, L):
-    """Sólo el texto de reglas de la carta (sin título ni texto de ambientación), para las ayudas en inglés."""
+def rules_lines(c, L):
+    """Sólo los renglones de reglas de la carta (sin título ni texto de ambientación), para las ayudas en inglés."""
     k = c['k']
     if k == 'mitos':
         # el texto de ambientación y el título van arriba de la línea del tipo (EVENTO / RUMOR / ACTIVO)
-        ty_y = next((y for x, y, t in L if y > 0.3 and re.match(r'^(evento|activo|rumor)', fold(t).replace(' ', ''))), None)
+        ty_y = next((l[1] for l in L if l[1] > 0.3 and re.match(r'^(evento|activo|rumor)', fold(l[2]).replace(' ', ''))), None)
         if ty_y is not None: L = [l for l in L if l[1] > ty_y + 0.005]
     elif k == 'misterio':
         # título arriba, ambientación en el recuadro del medio y reglas en el de abajo: corta en el salto más grande
@@ -100,7 +100,47 @@ def rules_text(c, L):
         L = [l for l in L if l[1] > 0.56]
     elif k == 'aventura':
         L = [l for l in L if l[1] > 0.1]
-    return ' '.join(t for x, y, t in L)
+    return L
+
+
+def load_ocrbox():
+    o = {}
+    for f in glob.glob(os.path.join(WORK, 'ocrbox_*.json')): o.update(json.load(open(f, encoding='utf-8')))
+    return o
+
+
+def card_hints(c, L, B, hint, es2cat):
+    """c['en'] = [[español, inglés, tipo, tipo de carta]] y c['hl'] = [[índice en c['en'], palabra delante, x0, y0, x1, y1, ...]]:
+    un recuadro por renglón de cada aparición, en coordenadas relativas a la imagen (work/ocrbox_*.json)."""
+    R = rules_lines(c, L)
+    pos = {id(l): j for j, l in enumerate(L)}
+    starts, s = [], ''
+    for l in R:
+        starts.append(len(s) + (1 if s else 0)); s = f'{s} {l[2]}' if s else l[2]
+    h = hint(s)
+    if c['k'] == 'mitos': h = [x for x in h if x[0] not in ('EVENTO', 'ACTIVO', 'RUMOR')]
+    en, hl = [], []
+    for es, eng, k, spans in h:
+        ie = len(en); en.append([es, eng, k] + ([es2cat[es]] if k == 'n' and es2cat.get(es) else []))
+        for a, b, trig in spans:
+            bx = []
+            for li, l in enumerate(R):
+                la = starts[li]; x, y = max(a, la), min(b, la + len(l[2]))
+                if x >= y: continue
+                j = pos[id(l)]
+                row = B[j] if B and j < len(B) and B[j][0] == l[2] else None
+                if not row: bx = []; break
+                t = l[2]; i0, i1 = x - la, y - la - 1
+                while i0 <= i1 and not t[i0].isalnum(): i0 += 1
+                while i1 >= i0 and not t[i1].isalnum(): i1 -= 1
+                if i0 > i1: continue
+                bx += [row[3][2 * i0], row[1], row[3][2 * i1 + 1], row[2]]
+            if bx: hl.append([ie, trig] + [round(v, 3) for v in bx])
+    if en: c['en'] = en
+    if hl: c['hl'] = hl
+
+
+def rules_text(c, L): return ' '.join(l[2] for l in rules_lines(c, L))
 
 
 CITY_CAPS = ['Buenos Aires', 'San Francisco', 'Londres', 'Roma', 'Tokio', 'Shanghái', 'Sídney', 'Arkham', 'Estambul']
@@ -254,14 +294,13 @@ def main():
         if twin: c['b'] = twin['b']
         cards.append(c)
     cards.sort(key=lambda c: c['id'])
-    es2en, traits_seen = build_names(items, ocr)
-    from glossary import TRAITS, TERMS, PRELUDE_FX, NAMES_FIX
-    es2en.update(NAMES_FIX)
+    es2en, traits_seen, es2cat = build_names(items, ocr)
+    from glossary import TRAITS, TERMS, PRELUDE_FX, NAMES_FIX, NAMES_FIX_CAT
+    es2en.update(NAMES_FIX); es2cat.update(NAMES_FIX_CAT)
     hint = Hinter(es2en, TRAITS, TERMS)
+    boxes = load_ocrbox()
     for c in cards:
-        h = hint(rules_text(c, lines(ocr, f"f{c['id']}")) if c['id'] < 9000 else c['t'])
-        if c['k'] == 'mitos': h = [x for x in h if x[0] not in ('EVENTO', 'ACTIVO', 'RUMOR')]
-        if h: c['en'] = h
+        if c['id'] < 9000: card_hints(c, lines(ocr, f"f{c['id']}"), boxes.get(f"f{c['id']}"), hint, es2cat)
     json.dump(es2en, open(os.path.join(WORK, 'es2en.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=0, sort_keys=True)
     out = 'window.EH_CARDS=' + json.dumps(cards, ensure_ascii=False, separators=(',', ':')) + ';\n'
     out += 'window.EH_PRELUDE_FX=' + json.dumps(PRELUDE_FX, ensure_ascii=False) + ';\n'
@@ -290,7 +329,7 @@ def build_names(items, ocr):
     """Nombre en español (OCR del título) -> nombre en inglés y rasgos (del mod en inglés, por ilustración)."""
     pairs = json.load(open(os.path.join(WORK, 'pairs.json'), encoding='utf-8'))
     by_i = {it['i']: it for it in items}
-    names = collections.defaultdict(collections.Counter); traits_seen = collections.defaultdict(collections.Counter)
+    names = collections.defaultdict(collections.Counter); cats = collections.defaultdict(collections.Counter); traits_seen = collections.defaultdict(collections.Counter)
     for i, (en, desc, dist, j) in pairs.items():
         if dist > PAIR_THR: continue
         L = ocr.get(f'f{i}', [])
@@ -304,6 +343,7 @@ def build_names(items, ocr):
         if fold(es) in NAMES_DROP: continue
         en = en.split(' - ')[0].strip()
         tr = [t for t in desc.split(';') if t and t not in SKIP_DESC and t != 'Common' and not t.startswith('Cost') and not t.startswith('Reck')]
+        cats[squash(es)][by_i[int(i)]['deck']] += 1
         names[es][f"{en}{f' ({chr(0x2014).join(tr)})' if tr and by_i[int(i)]['deck'] == 'x_estado' else ''}"] += 1
         tl = [t for x, y, t in L if 0.5 < y < 0.6]
         if tl: traits_seen[tl[0]][';'.join(tr)] += 1
@@ -315,8 +355,13 @@ def build_names(items, ocr):
         # variantes con palabras pegadas por el OCR: se queda la que tiene más espacios
         if k not in best or es.count(' ') > best[k].count(' '): best[k] = es
         es2en[k] = en
+    es2cat = {polish(best[k]): CAT.get(cats[k].most_common(1)[0][0], '') for k in es2en}
     es2en = {polish(best[k]): v for k, v in es2en.items()}
-    return es2en, {k: dict(v) for k, v in traits_seen.items()}
+    return es2en, {k: dict(v) for k, v in traits_seen.items()}, es2cat
+
+
+# tipo de carta chica en inglés según el mazo del mod en español
+CAT = {'x_estado': 'Condition', 'x_apoyo': 'Asset', 'x_apoyo_unico': 'Unique Asset', 'x_hechizo': 'Spell', 'x_artefacto': 'Artifact'}
 
 
 if __name__ == '__main__':

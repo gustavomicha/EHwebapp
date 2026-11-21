@@ -535,3 +535,23 @@ body.hashand .sizectl { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); 
 .invcard.out b { color: var(--muted); text-decoration: line-through; }
 .invcard:hover { box-shadow: 0 0 0 1px var(--gold); }
 .viewer .flip.land.sheetv { width: min(100%, 1000px, calc(78vh * 1.25)); }
+
+/* palabras traducidas: recuadro sobre la carta y cartel en inglés al tocarlo */
+.hls { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.hl {
+  position: absolute; margin: 0; padding: 0; pointer-events: auto; cursor: help;
+  border: 1.5px solid rgba(31, 107, 91, .85); border-radius: 4px; background: rgba(127, 224, 182, .2);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .25);
+  -webkit-tap-highlight-color: transparent;
+}
+.hl:hover { background: rgba(127, 224, 182, .32); }
+.hl.on { background: rgba(127, 224, 182, .42); border-color: #0f4a3e; }
+.hlpop {
+  position: absolute; z-index: 3; max-width: calc(100% - 8px); padding: .35em .7em .4em;
+  background: rgba(11, 20, 18, .95); color: var(--parch); border: 1px solid var(--gold); border-radius: 8px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .65); font-family: var(--body);
+  font-size: clamp(.95rem, 4.6cqw, 1.5rem); line-height: 1.2; text-align: center; white-space: nowrap; pointer-events: none;
+}
+.viewer .flip.land .hlpop { font-size: clamp(.95rem, 3cqw, 1.5rem); }
+.hlpop b { color: var(--gold-2); font-weight: 600; letter-spacing: .02em; }
+.hlpop small { display: block; color: var(--muted); font-size: .72em; margin-top: 1px; }

@@ -33,6 +33,7 @@
 
   // ---------- utilidades ----------
   const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
   const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const face = (id) => `img/c/${id}.webp`;
@@ -556,11 +557,14 @@
   }
   function openCard(id, opt = {}) {
     const c = CARDS[id]; if (!c) return;
-    const p = S.pending.find((x) => x.id === id);
-    const w = whereIs(id);
+    const p = S && !opt.review ? S.pending.find((x) => x.id === id) : null;
+    const w = S && !opt.review ? whereIs(id) : { zone: 'none' };
     let actions = '';
     const fromDeck = p && p.from !== 'MY' ? deck(p.from) : null;
-    if (opt.readonly) {
+    if (opt.review) {
+      actions = `<button class="btn" data-rv="-1">← Anterior</button><button class="btn" data-rv="1">Siguiente →</button>
+        <div class="muted" style="grid-column:1/-1;text-align:center;font-size:.85rem">Carta ${id} · ${opt.review}</div>`;
+    } else if (opt.readonly) {
       actions = `<button class="btn primary full" data-x>Hecho</button>`;
     } else if (p && p.from === 'MY') {
       const stays = c.ty === 'rumor' || c.ty === 'activo';
@@ -603,15 +607,18 @@
       ${rumor}${tokRow}
       ${englishHTML(c)}
       <div class="viewer"><div class="flip ${land ? 'land' : ''}" id="flipper" style="aspect-ratio:${ratio(id)}">
-        <div class="face a"><img src="${face(id)}" alt="" draggable="false">${tk ? `<div class="tks big">${tokBadges(id)}</div>` : ''}</div>
+        <div class="face a"><img src="${face(id)}" alt="" draggable="false">${hlHTML(c)}${tk ? `<div class="tks big">${tokBadges(id)}</div>` : ''}</div>
       </div></div>
       <div class="fliphint"><button class="chip" data-zoom>${isZoom() ? '− Achicar' : '🔍 Ampliar'}</button> · toca la carta para ${isZoom() ? 'achicar' : 'ampliar'}</div>
       <div class="actions">${actions}</div>
       ${opt.fresh && p ? '<p class="muted" style="text-align:center;font-size:.85rem">Cerrar con ✕ cancela el robo: la carta vuelve a su lugar.</p>' : ''}
     </div>`, (e) => {
-      if (e.target.closest('[data-zoom]')) { toggleZoom(); return; }
+      if (e.target.closest('[data-zoom]')) { closeHl(); toggleZoom(); return; }
+      const hb = e.target.closest('.hl');
+      if (hb) { showHl(c, hb); return; }
       if (e.target.closest('#flipper')) {
-        // un toque en la carta: ampliar o volver al tamaño normal
+        // un toque en la carta: cierra el cartel en inglés si hay uno; si no, amplía o vuelve al tamaño normal
+        if (closeHl()) return;
         toggleZoom();
         return;
       }
@@ -761,12 +768,64 @@
   // c.en = [[español, inglés, tipo]] calculado al generar los datos (tools/hints.py):
   // n = nombre de carta (Estado, Apoyo, Hechizo, Artefacto, Apoyo único), r = rasgo en VERSALITAS, t = término de reglas.
   function englishHTML(c) {
-    const en = c.en || [];
+    // lo que ya tiene su recuadro sobre la carta no se repite acá
+    const covered = new Set((c.hl || []).map((h) => h[0]));
+    const en = (c.en || []).filter((_, i) => !covered.has(i));
     if (!en.length) return '';
     // un solo renglón compacto, sin rótulos: primero nombres y rasgos (lo que hay que buscar en las cartas), después términos
     const order = { n: 0, r: 1, t: 2 };
     const item = ([es, eng, k]) => `<span class="${k === 't' ? 'term' : ''}">${esc(es)} → <i>${esc(eng)}</i></span>`;
     return `<div class="note en compact">${[...en].sort((a, b) => order[a[2]] - order[b[2]]).map(item).join(' · ')}</div>`;
+  }
+
+  // c.hl = [[índice en c.en, tipo de carta delante («Condition», «Spell»… o ''), x0, y0, x1, y1, …]]: un recuadro por
+  // renglón de cada aparición, en fracciones de la imagen. Al tocarlo aparece el texto en inglés.
+  function hlHTML(c) {
+    if (!c.hl) return '';
+    const pct = (v) => `${(v * 100).toFixed(2)}%`;
+    let h = '';
+    c.hl.forEach((x, g) => {
+      for (let i = 2; i + 3 < x.length; i += 4) {
+        const [x0, y0, x1, y1] = x.slice(i, i + 4), py = (y1 - y0) * 0.12;
+        h += `<button class="hl" data-g="${g}" aria-label="${esc(hlPlain(c, x))}" style="left:${pct(x0 - 0.006)};top:${pct(y0 - py)};width:${pct(x1 - x0 + 0.012)};height:${pct(y1 - y0 + 2 * py)}"></button>`;
+      }
+    });
+    return `<div class="hls">${h}</div>`;
+  }
+  function hlParts(c, x) {
+    const [, eng, k, cat] = c.en[x[0]] || [];
+    const m = /^(.*?)\s*\((.*)\)$/.exec(eng || '');
+    const name = m ? m[1] : (eng || ''), sub = m ? m[2].replace(/—/g, ' · ') : '';
+    // tipo con «!» delante: «Hechizo que no sea RITUAL» -> «non-RITUAL Spell»
+    if (k === 'r' && x[1] && x[1][0] === '!') return { pre: 'non-', main: name.toUpperCase(), type: x[1].slice(1), sub: '' };
+    if (k === 'r') return { main: name.toUpperCase(), type: x[1] || '', sub: '' };
+    if (k === 'n') return { main: name, type: x[1] || cat || '', sub };
+    return { main: name, type: '', sub: '' };
+  }
+  const hlPlain = (c, x) => { const p = hlParts(c, x); return [(p.pre || '') + p.main, p.type, p.sub].filter(Boolean).join(' '); };
+  function closeHl() {
+    const pop = $('#modal .hlpop'); if (!pop) return false;
+    pop.remove(); $$('#modal .hl.on').forEach((b) => b.classList.remove('on'));
+    return true;
+  }
+  function showHl(c, btn) {
+    const g = btn.dataset.g, was = btn.classList.contains('on');
+    closeHl(); if (was) return;
+    const p = hlParts(c, c.hl[g]);
+    const boxes = $$(`#modal .hl[data-g="${g}"]`); boxes.forEach((b) => b.classList.add('on'));
+    const faceEl = btn.closest('.face');
+    const pop = document.createElement('div');
+    pop.className = 'hlpop';
+    pop.innerHTML = `${p.pre ? esc(p.pre) : ''}<b>${esc(p.main)}</b>${p.type ? ` <span>${esc(p.type)}</span>` : ''}${p.sub ? `<small>${esc(p.sub)}</small>` : ''}`;
+    faceEl.appendChild(pop);
+    // arriba del primer recuadro; si no entra, abajo del último. Siempre dentro de la carta.
+    const W = faceEl.clientWidth, first = boxes[0], last = boxes[boxes.length - 1];
+    const pw = pop.offsetWidth, ph = pop.offsetHeight, gap = 6;
+    let top = first.offsetTop - ph - gap;
+    if (top < 4) top = last.offsetTop + last.offsetHeight + gap;
+    const cx = first.offsetLeft + first.offsetWidth / 2;
+    pop.style.top = `${top}px`;
+    pop.style.left = `${Math.max(4, Math.min(W - pw - 4, cx - pw / 2))}px`;
   }
 
   // ---------- guardado ----------
@@ -1033,7 +1092,36 @@
     clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3200);
   }
 
+  // ---------- revisión de los recuadros en inglés (index.html#revisar) ----------
+  const KIND_NAME = { america: 'América', europa: 'Europa', asia: 'Asia', general: 'Generales', otros: 'Otros mundos',
+    expedicion: 'Expedición', investigacion: 'Investigación', especial: 'Especiales', mitos: 'Mitos', misterio: 'Misterios',
+    preludio: 'Preludios', aventura: 'Aventuras', ruinas: 'Ruinas místicas', devastacion: 'Devastación', desastre: 'Desastres' };
+  function reviewScreen() {
+    const list = Object.values(CARDS).filter((c) => c.hl).sort((a, b) => (a.k > b.k ? 1 : a.k < b.k ? -1 : a.id - b.id));
+    const ids = list.map((c) => c.id);
+    const groups = {};
+    list.forEach((c) => (groups[c.k] = groups[c.k] || []).push(c));
+    $('#app').innerHTML = `<div class="page" style="padding:12px">
+      <h2 style="font-family:var(--display);color:var(--gold-2);font-weight:400">Revisión de palabras en inglés</h2>
+      <p class="muted">${list.length} cartas con recuadros. Toca una para verla en el visor; toca un recuadro para ver el inglés.</p>
+      ${Object.entries(groups).map(([k, cs]) => `<h3 style="color:var(--gold)">${esc(KIND_NAME[k] || k)} <small class="muted">(${cs.length})</small></h3>
+        <div class="thumbs ${cs[0].r > 1 ? 'land' : ''}">${cs.map((c) => `<div class="t" data-rvopen="${c.id}"><img src="${face(c.id)}" loading="lazy" alt=""><span>${c.id} · ${c.hl.length} ${esc(c.n || '')}</span></div>`).join('')}</div>`).join('')}
+    </div>`;
+    const show = (id) => {
+      const c = CARDS[id];
+      openCard(id, { review: `${KIND_NAME[c.k] || c.k} · ${ids.indexOf(id) + 1} de ${ids.length}` });
+      const h = modalHandler;
+      modalHandler = (e) => {
+        const b = e.target.closest('[data-rv]');
+        if (b) { const j = ids.indexOf(id) + +b.dataset.rv; if (j >= 0 && j < ids.length) show(ids[j]); return; }
+        h(e);
+      };
+    };
+    $('#app').onclick = (e) => { const t = e.target.closest('[data-rvopen]'); if (t) show(+t.dataset.rvopen); };
+  }
+
   // arranque
+  if (location.hash === '#revisar') { applyZoom(); applySize(); reviewScreen(); return; }
   const cur = lsGet(LS_CUR, null);
   if (cur) { S = cur; H = lsGet(LS_HIST, []); ui.screen = 'game'; }
   applyLayout();
