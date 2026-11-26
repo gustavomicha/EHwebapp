@@ -7,6 +7,8 @@ App local (sin internet) para reemplazar los mazos físicos de **Encuentros, Mit
 Doble clic en `index.html` (Chrome o Edge). La partida se guarda sola en el navegador de esta PC.
 Para usarla en el celular: `abrir-en-celular.bat` (misma red WiFi).
 
+Publicada en https://gustavomicha.github.io/EHwebapp/ se puede **instalar como app** (botón «Instalar como app» al pie del inicio o en el Menú; en iPhone/iPad: Safari → Compartir → «Agregar a inicio»). Abre a pantalla completa con el ícono del Portal. `sw.js` siempre busca primero la red y guarda copia de lo descargado para poder abrir sin conexión; `manifest.webmanifest` define nombre e íconos (`img/icon-*.png`, recortados del dorso de Portal `img/b/10.webp`).
+
 ## Preparar una partida
 
 1. **Colección**: el juego básico siempre está; toca cada expansión para sumarla. Sólo se usan las cartas de lo que esté marcado.
